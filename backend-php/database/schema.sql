@@ -1,12 +1,6 @@
 -- =============================================
 -- VexCenter — PELNY SCHEMAT BAZY DANYCH
--- InfinityFree: if0_41873473_vexcenter
 -- =============================================
-
-CREATE DATABASE IF NOT EXISTS if0_41873473_vexcenter
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-USE if0_41873473_vexcenter;
 
 -- =============================================
 -- UZYTKOWNICY
@@ -50,8 +44,7 @@ CREATE TABLE IF NOT EXISTS games (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_games_status (status),
   INDEX idx_games_featured (is_featured),
-  INDEX idx_games_created (created_at),
-  FULLTEXT idx_games_search (title, description)
+  INDEX idx_games_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- =============================================
