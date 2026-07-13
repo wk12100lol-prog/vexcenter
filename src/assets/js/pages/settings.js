@@ -160,7 +160,6 @@ class SettingsPage {
       this.renderGames(el, await api.getSettings());
     }));
   }
-}
 
   async renderNotifications(el) {
     try {

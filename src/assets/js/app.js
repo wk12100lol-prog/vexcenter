@@ -101,7 +101,7 @@
     document.getElementById('splash-diag')?.addEventListener('click', async function() {
       this.textContent = 'Sprawdzanie połączenia...';
       try {
-        const res = await fetch('https://vexcenter.xo.je/api/ping');
+        const res = await fetch('https://vexcenter1.vercel.app/api/ping');
         const data = await res.json();
         this.textContent = 'API: ' + (data.status || 'err') + ' | DB: ' + (data.database || '?') + ' | PHP: ' + (data.php_version || '?');
       } catch (e) {
