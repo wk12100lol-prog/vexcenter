@@ -6,7 +6,7 @@ const crypto = require('crypto');
 
 let mainWindow;
 const ICON_PATH = path.join(__dirname, 'src', 'assets', 'images', 'icon.png');
-const API_BASE = 'https://vexcenter.xo.je/api';
+const API_BASE = 'https://vexcenter1.vercel.app/api';
 
 function doRequest(method, endpoint, data) {
   return new Promise((resolve) => {
