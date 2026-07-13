@@ -24,6 +24,25 @@
     });
   };
 
+  // test button - manual navigation
+  const testBtn = document.createElement('button');
+  testBtn.textContent = 'TEST: navigate store';
+  testBtn.style.cssText = 'position:fixed;bottom:40px;right:10px;z-index:99998;padding:6px 12px;font-size:11px;background:#7c3aed;color:#fff;border:none;border-radius:4px;cursor:pointer;';
+  testBtn.addEventListener('click', () => {
+    log('TEST: navigating to store...');
+    try {
+      if (typeof router !== 'undefined' && router.navigate) {
+        router.navigate('store');
+        log('TEST: navigate called');
+      } else {
+        log('TEST: router not found!');
+      }
+    } catch (e) {
+      log('TEST ERROR: ' + e.message);
+    }
+  });
+  document.body.appendChild(testBtn);
+
   document.addEventListener('DOMContentLoaded', () => {
     log('DOMContentLoaded fired');
     log('api.token=' + (api?.token ? 'exists' : 'null'));
@@ -32,6 +51,7 @@
     log('headerComponent=' + (typeof headerComponent));
     log('sidebarComponent=' + (typeof sidebarComponent));
     log('storePage=' + (typeof storePage));
+    log('libraryPage=' + (typeof libraryPage));
     log('VexCenter=' + (window.VexCenter ? 'exists' : 'null'));
     log('VexCenter.api=' + (window.VexCenter?.api ? 'exists' : 'null'));
 
