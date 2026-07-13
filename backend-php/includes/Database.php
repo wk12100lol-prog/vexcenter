@@ -11,17 +11,10 @@ class Database {
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                     PDO::ATTR_EMULATE_PREPARES => false,
                 ];
-                // TiDB wymaga TLS
-                $bundledCa = __DIR__ . '/cacert.pem';
-                $caFile = file_exists($bundledCa) ? $bundledCa : null;
-                foreach (['/etc/ssl/certs/ca-certificates.crt','/etc/pki/tls/certs/ca-bundle.crt'] as $p) {
-                    if ($caFile) break;
-                    if (file_exists($p)) { $caFile = $p; }
-                }
-                if ($caFile) {
-                    $opts[PDO::MYSQL_ATTR_SSL_CA] = $caFile;
-                    @$opts[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
-                }
+                // TiDB wymaga TLS — wymuś SSL przez MYSQL_ATTR_SSL_KEY (pusty)
+                $opts[PDO::MYSQL_ATTR_SSL_KEY] = null;
+                $opts[PDO::MYSQL_ATTR_SSL_CERT] = null;
+                $opts[PDO::MYSQL_ATTR_SSL_CA] = __DIR__ . '/cacert.pem';
                 self::$instance = new PDO($dsn, DB_USER, DB_PASS, $opts);
             } catch (PDOException $e) {
                 $msg = $e->getMessage();
