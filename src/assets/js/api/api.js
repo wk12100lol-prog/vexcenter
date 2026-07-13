@@ -98,6 +98,12 @@ class VexAPI {
   getDevStatus() { return this.get('developer/status'); }
   getNotifications() { return this.get('notifications'); }
   markNotificationsRead() { return this.put('notifications/read'); }
+  getConversations() { return this.get('messages/conversations'); }
+  getMessages(userId, before = 0) { return this.get(`messages/list?user_id=${userId}&before=${before}`); }
+  sendMessage(receiverId, content) { return this.post('messages/send', { receiver_id: receiverId, content }); }
+  markMessagesRead(userId) { return this.put('messages/read', { user_id: userId }); }
+  uploadAvatar(fd) { return this.post('user/avatar', fd); }
+  searchUsers(query) { return this.get('user/search?q=' + encodeURIComponent(query)); }
   getAdminStats() { return this.get('admin/stats'); }
   getPendingGames() { return this.get('admin/games'); }
   approveGame(id) { return this.put(`admin/games/${id}/approve`); }

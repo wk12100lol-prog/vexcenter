@@ -213,6 +213,22 @@ CREATE TABLE IF NOT EXISTS announcements (
   INDEX idx_announcements_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- =============================================
+-- WIADOMOSCI (czat)
+-- =============================================
+CREATE TABLE IF NOT EXISTS messages (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  sender_id INT UNSIGNED NOT NULL,
+  receiver_id INT UNSIGNED NOT NULL,
+  content TEXT NOT NULL,
+  is_read TINYINT(1) NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_messages_conversation (sender_id, receiver_id),
+  INDEX idx_messages_read (receiver_id, is_read)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Admin: admin@vexcenter.pl / admin123
 INSERT IGNORE INTO users (id, username, email, password, role) VALUES
   (1, 'Admin', 'admin@vexcenter.pl', '$2y$10$DrYXpZuPU0NqvzSy1qPh2.pcZTZVvSfjiLpEsTNgvEGmbV0EOe6Ay', 'admin');

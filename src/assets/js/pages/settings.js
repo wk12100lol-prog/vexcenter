@@ -48,6 +48,19 @@ class SettingsPage {
   renderProfile(el, data) {
     const u = data.user;
     el.innerHTML = `
+      <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:24px;margin-bottom:16px;">
+        <h3 style="margin-bottom:20px;">Awatar</h3>
+        <div style="display:flex;align-items:center;gap:20px;">
+          <div id="s-avatar-preview" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;flex-shrink:0;overflow:hidden;">
+            ${u.avatar ? '<img src="'+u.avatar+'" style="width:100%;height:100%;object-fit:cover;" />' : u.username.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <input type="file" id="s-avatar-input" accept="image/*" style="display:none;" />
+            <button class="btn btn-secondary btn-sm" id="s-avatar-btn">Zmień zdjęcie</button>
+            <p style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:6px;">JPG, PNG, WEBP, GIF</p>
+          </div>
+        </div>
+      </div>
       <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:24px;">
         <h3 style="margin-bottom:20px;">Edytuj profil</h3>
         <form id="settings-form">
@@ -72,6 +85,29 @@ class SettingsPage {
       headerComponent.updateUser(api.user);
       alert('Zapisano!');
     });
+
+    document.getElementById('s-avatar-btn')?.addEventListener('click', () => {
+      document.getElementById('s-avatar-input').click();
+    });
+    document.getElementById('s-avatar-input')?.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const fd = new FormData();
+      fd.append('avatar', file);
+      try {
+        const result = await api.uploadAvatar(fd);
+        const avatarUrl = result.avatar || result.data?.avatar;
+        if (avatarUrl) {
+          const preview = document.getElementById('s-avatar-preview');
+          preview.innerHTML = '<img src="'+avatarUrl+'" style="width:100%;height:100%;object-fit:cover;" />';
+          api.user.avatar = avatarUrl;
+          headerComponent.updateUser(api.user);
+        }
+        alert('Awatar zaktualizowany!');
+      } catch (err) {
+        alert('Błąd: ' + err.message);
+      }
+    });
   }
 
   async renderFriends(el) {
@@ -86,15 +122,35 @@ class SettingsPage {
             <button class="btn btn-secondary btn-sm" id="btn-add-friend">+ Dodaj znajomego</button>
           </div>
           ${pr.length ? `<div style="margin-bottom:16px;padding:12px;background:rgba(245,158,11,0.08);border-radius:8px;border:1px solid rgba(245,158,11,0.15);"><strong style="color:var(--yellow-400);font-size:13px;">Prośby o znajomych (${pr.length})</strong>${pr.map(f => `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:6px 0;"><span>${f.username}</span><div><button class="btn btn-sm btn-primary" data-accept="${f.id}">Akceptuj</button> <button class="btn btn-sm btn-ghost" data-reject="${f.id}">Odrzuć</button></div></div>`).join('')}</div>` : ''}
-          <div>${fl.length ? fl.map(f => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--glass-border);"><span>${f.username} ${f.status_message ? '<span style="color:rgba(255,255,255,0.3);font-size:12px;">— '+f.status_message+'</span>':''}</span><button class="btn btn-sm btn-ghost" data-remove="${f.id}" style="color:var(--red-400);">Usuń</button></div>`).join('') : '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Brak znajomych. Dodaj kogoś!</p>'}</div>
+          <div>${fl.length ? fl.map(f => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--glass-border);">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;overflow:hidden;${f.avatar ? 'background:none;' : ''}">
+                ${f.avatar ? '<img src="'+f.avatar+'" style="width:100%;height:100%;object-fit:cover;" />' : f.username.charAt(0).toUpperCase()}
+              </div>
+              <span>${f.username} ${f.status_message ? '<span style="color:rgba(255,255,255,0.3);font-size:12px;">— '+f.status_message+'</span>':''}</span>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-sm btn-ghost" data-chat="${f.id}" title="Wyślij wiadomość">💬</button>
+              <button class="btn btn-sm btn-ghost" data-remove="${f.id}" style="color:var(--red-400);">Usuń</button>
+            </div>
+          </div>`).join('') : '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Brak znajomych. Dodaj kogoś!</p>'}</div>
         </div>
       `;
       el.querySelectorAll('[data-accept]').forEach(b => b.addEventListener('click', async () => { await api.acceptFriend(b.dataset.accept); this.renderFriends(el); }));
       el.querySelectorAll('[data-reject]').forEach(b => b.addEventListener('click', async () => { await api.rejectFriend(b.dataset.reject); this.renderFriends(el); }));
       el.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', async () => { if(confirm('Usunąć znajomego?')){ await api.removeFriend(b.dataset.remove); this.renderFriends(el); }}));
-      document.getElementById('btn-add-friend')?.addEventListener('click', async () => {
-        const id = prompt('Podaj ID użytkownika:');
-        if (id) { try { await api.addFriend(parseInt(id)); alert('Wysłano zaproszenie!'); this.renderFriends(el); } catch(e) { alert(e.message); } }
+      el.querySelectorAll('[data-chat]').forEach(b => b.addEventListener('click', () => {
+        const panel = document.getElementById('chat-panel');
+        if (panel) panel.remove();
+        const chatBtn = document.getElementById('chat-btn');
+        if (chatBtn) chatBtn.click();
+        // HACK: trigger chat panel then navigate to this friend's conversation
+        setTimeout(() => headerComponent.openConversation(b.dataset.chat), 200);
+      }));
+      document.getElementById('btn-add-friend')?.addEventListener('click', () => {
+        const modal = document.getElementById('add-friend-modal');
+        if (modal) modal.remove();
+        profilePage.showAddFriendModal();
       });
     } catch { el.innerHTML = '<div class="empty-state"><p>Błąd ładowania znajomych</p></div>'; }
   }

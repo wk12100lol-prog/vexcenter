@@ -48,6 +48,7 @@ try {
         case 'friends':     require __DIR__ . '/friends/router.php'; break;
         case 'settings':    require __DIR__ . '/settings/router.php'; break;
         case 'developer':   require __DIR__ . '/developer/router.php'; break;
+        case 'messages':    require __DIR__ . '/messages/router.php'; break;
         case 'notifications': require __DIR__ . '/notifications/router.php'; break;
         case 'announcements': require __DIR__ . '/announcements.php'; break;
         case 'ping':        require __DIR__ . '/ping.php'; break;
