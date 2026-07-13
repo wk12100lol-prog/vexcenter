@@ -1,7 +1,7 @@
 (function () {
   const box = document.createElement('div');
   box.id = 'diag-box';
-  box.style.cssText = 'position:fixed;top:10px;right:10px;z-index:99998;background:#1a1a2e;border:1px solid #7c3aed;border-radius:8px;padding:12px;font-size:11px;color:#fff;font-family:monospace;max-width:400px;max-height:300px;overflow:auto;';
+  box.style.cssText = 'position:fixed;top:10px;right:10px;z-index:99998;background:#1a1a2e;border:1px solid #7c3aed;border-radius:8px;padding:12px;font-size:11px;color:#fff;font-family:monospace;max-width:400px;max-height:300px;overflow:auto;display:none;';
   document.body.appendChild(box);
 
   function log(msg) {
@@ -11,7 +11,6 @@
     box.scrollTop = box.scrollHeight;
   }
 
-  // hooks
   const origFetch = window.fetch;
   window.fetch = function (url, opts) {
     log('FETCH ' + (opts?.method || 'GET') + ' ' + url);
@@ -24,24 +23,14 @@
     });
   };
 
-  // test button - manual navigation
-  const testBtn = document.createElement('button');
-  testBtn.textContent = 'TEST: navigate store';
-  testBtn.style.cssText = 'position:fixed;bottom:40px;right:10px;z-index:99998;padding:6px 12px;font-size:11px;background:#7c3aed;color:#fff;border:none;border-radius:4px;cursor:pointer;';
-  testBtn.addEventListener('click', () => {
-    log('TEST: navigating to store...');
-    try {
-      if (typeof router !== 'undefined' && router.navigate) {
-        router.navigate('store');
-        log('TEST: navigate called');
-      } else {
-        log('TEST: router not found!');
-      }
-    } catch (e) {
-      log('TEST ERROR: ' + e.message);
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 'i' && !e.shiftKey && !e.altKey && !e.metaKey) {
+      const target = e.target;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+      e.preventDefault();
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
     }
   });
-  document.body.appendChild(testBtn);
 
   document.addEventListener('DOMContentLoaded', () => {
     log('DOMContentLoaded fired');
@@ -55,7 +44,6 @@
     log('VexCenter=' + (window.VexCenter ? 'exists' : 'null'));
     log('VexCenter.api=' + (window.VexCenter?.api ? 'exists' : 'null'));
 
-    // test API
     api.get('ping').then(d => {
       log('PING OK status=' + (d.status || d));
     }).catch(e => {
