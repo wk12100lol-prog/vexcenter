@@ -26,29 +26,27 @@ class GameDetailPage {
               </div>
               <div style="font-size:28px;font-weight:800;color:var(--purple-400);margin-bottom:16px;">${g.price > 0 ? g.price.toFixed(2)+' zł' : '<span style="color:var(--green-400);">Darmowa</span>'}</div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-                ${!d.is_installed ? `<button class="btn btn-primary" id="btn-install">📥 Zainstaluj grę</button>` : `
+                ${d.is_installed ? `
                   <button class="btn btn-primary" id="btn-launch">▶ Uruchom</button>
                   <button class="btn btn-secondary" id="btn-set-path">📂 Zmień ścieżkę</button>
+                ` : `
+                  <button class="btn btn-primary" id="btn-install">📥 Pobierz i zainstaluj</button>
                 `}
                 ${api.isAuthenticated && !d.is_installed && g.price === 0 ? `<button class="btn btn-secondary" id="btn-add-to-library">+ Dodaj do biblioteki</button>` : ''}
+              </div>
+              <div id="install-progress" style="display:none;margin-bottom:16px;">
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+                  <span id="progress-label">Pobieranie...</span>
+                  <span id="progress-pct">0%</span>
+                </div>
+                <div style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;">
+                  <div id="progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#a855f7);border-radius:3px;transition:width 0.3s;"></div>
+                </div>
               </div>
               ${g.tags?.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;">${g.tags.map(t => `<span style="font-size:11px;padding:3px 10px;border-radius:4px;background:rgba(124,58,237,0.1);color:var(--purple-300);border:1px solid rgba(124,58,237,0.1);">${t}</span>`).join('')}</div>` : ''}
               <p style="color:rgba(255,255,255,0.6);line-height:1.6;font-size:14px;">${g.description}</p>
             </div>
           </div>
-
-          ${d.downloads?.length ? `
-          <div class="section" style="margin-top:32px;">
-            <div class="section-header"><h2>Linki do pobrania</h2></div>
-            <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:16px;">
-              ${d.downloads.map(dl => `
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--glass-border);">
-                  <div><strong>${dl.platform}</strong> ${dl.version ? 'v'+dl.version : ''} ${dl.filesize ? '• '+(dl.filesize/1024/1024).toFixed(1)+' MB' : ''}</div>
-                  <a href="${dl.url}" target="_blank" class="btn btn-sm btn-secondary">Pobierz</a>
-                </div>
-              `).join('')}
-            </div>
-          </div>` : ''}
 
           <div class="section" style="margin-top:24px;">
             <div class="section-header"><h2>Opinie (${d.reviews?.length||0})</h2></div>
@@ -93,19 +91,11 @@ class GameDetailPage {
         this.render(container, gameId);
       });
 
-      document.getElementById('btn-install')?.addEventListener('click', async () => {
-        const dir = await window.VexCenter.game.selectInstallPath();
-        if (dir.canceled) return;
-        const exe = await window.VexCenter.game.selectExecutable();
-        if (exe.canceled) return;
-        await api.registerInstall(gameId, dir.path, exe.path);
-        alert('Gra zainstalowana!');
-        this.render(container, gameId);
-      });
+      document.getElementById('btn-install')?.addEventListener('click', () => this.downloadAndInstall(container, gameId, g));
 
       document.getElementById('btn-launch')?.addEventListener('click', async () => {
         const exe = d.installation?.executable_path;
-        if (!exe) return alert('Brak ścieżki do pliku wykonywalnego. Ustaw ją w ustawieniach.');
+        if (!exe) return alert('Brak ścieżki do pliku wykonywalnego.');
         const result = await window.VexCenter.game.launch(gameId, exe);
         if (!result.success) alert('Błąd: '+result.error);
       });
@@ -123,6 +113,77 @@ class GameDetailPage {
       });
 
     } catch { container.innerHTML = '<div class="empty-state"><h3>Błąd ładowania gry</h3></div>'; }
+  }
+
+  async downloadAndInstall(container, gameId, game) {
+    if (!game.game_file) {
+      alert('Brak linku do pobrania dla tej gry.');
+      return;
+    }
+    if (!window.VexCenter?.game?.download || !window.VexCenter?.game?.extract) {
+      alert('Funkcja dostępna tylko w aplikacji desktopowej.');
+      return;
+    }
+
+    const installDir = await window.VexCenter.game.selectInstallPath();
+    if (installDir.canceled) return;
+
+    const progressEl = document.getElementById('install-progress');
+    const bar = document.getElementById('progress-bar');
+    const pct = document.getElementById('progress-pct');
+    const label = document.getElementById('progress-label');
+    if (progressEl) progressEl.style.display = 'block';
+
+    this._updateProgress(0, 'Pobieranie...');
+
+    if (window.VexCenter.onDownloadProgress) {
+      window.VexCenter.onDownloadProgress((p) => this._updateProgress(p, 'Pobieranie...'));
+    }
+
+    const dlResult = await window.VexCenter.game.download(game.game_file, installDir.path);
+    if (!dlResult.success) {
+      this._updateProgress(0, 'Błąd pobierania: ' + dlResult.error);
+      return;
+    }
+
+    const downloadedFile = dlResult.path;
+    const ext = downloadedFile.split('.').pop().toLowerCase();
+
+    let extractedDir = installDir.path;
+
+    if (['zip', 'rar', '7z'].includes(ext)) {
+      this._updateProgress(0, 'Rozpakowywanie...');
+      if (ext === 'zip') {
+        const extractResult = await window.VexCenter.game.extract(downloadedFile, installDir.path);
+        if (!extractResult.success) {
+          this._updateProgress(0, 'Błąd rozpakowywania: ' + extractResult.error);
+          return;
+        }
+      } else {
+        this._updateProgress(0, 'Rozpakuj ręcznie plik ' + downloadedFile);
+        alert('Plik ' + ext.toUpperCase() + ' nie może być automatycznie rozpakowany.\nRozpakuj go ręcznie z: ' + downloadedFile);
+      }
+    }
+
+    this._updateProgress(0, 'Wybierz plik wykonywalny...');
+    const exeResult = await window.VexCenter.game.selectExecutable();
+    if (exeResult.canceled) {
+      this._updateProgress(0, 'Anulowano');
+      return;
+    }
+
+    await api.registerInstall(gameId, installDir.path, exeResult.path);
+    this._updateProgress(100, 'Zainstalowano!');
+    setTimeout(() => this.render(container, gameId), 500);
+  }
+
+  _updateProgress(pct, labelText) {
+    const bar = document.getElementById('progress-bar');
+    const pctEl = document.getElementById('progress-pct');
+    const labelEl = document.getElementById('progress-label');
+    if (bar) bar.style.width = pct + '%';
+    if (pctEl) pctEl.textContent = pct + '%';
+    if (labelEl) labelEl.textContent = labelText;
   }
 }
 

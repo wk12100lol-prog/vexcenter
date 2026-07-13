@@ -3,6 +3,9 @@ const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
 const crypto = require('crypto');
+const https = require('https');
+const http = require('http');
+const AdmZip = require('adm-zip');
 
 let mainWindow;
 const ICON_PATH = path.join(__dirname, 'src', 'assets', 'images', 'icon.png');
@@ -59,3 +62,59 @@ ipcMain.handle('game:launch', async (_, id, exe) => {
 ipcMain.handle('game:select-install-path', async () => { const r = await dialog.showOpenDialog(mainWindow, {properties:['openDirectory']}); return r.canceled ? {canceled:true} : {path: r.filePaths[0]}; });
 ipcMain.handle('game:select-executable', async () => { const r = await dialog.showOpenDialog(mainWindow, {properties:['openFile'], filters:[{name:'Wykonywalne', extensions:['exe','bat','cmd','lnk']},{name:'Wszystkie', extensions:['*']}]}); return r.canceled ? {canceled:true} : {path: r.filePaths[0]}; });
 ipcMain.handle('shell:open-external', async (_, url) => { if (url.startsWith('http')) shell.openExternal(url); });
+
+ipcMain.handle('game:download', async (event, url, destDir) => {
+  return new Promise((resolve) => {
+    try {
+      if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+      const filename = path.basename(url.split('?')[0]) || 'game.zip';
+      const filepath = path.join(destDir, filename);
+
+      const protocol = url.startsWith('https') ? https : http;
+      protocol.get(url, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          protocol.get(res.headers.location, (res2) => downloadStream(res2, filepath, destDir, resolve));
+          return;
+        }
+        downloadStream(res, filepath, destDir, resolve);
+      }).on('error', (e) => resolve({ success: false, error: e.message }));
+    } catch (e) { resolve({ success: false, error: e.message }); }
+  });
+});
+
+function downloadStream(res, filepath, destDir, resolve) {
+  const total = parseInt(res.headers['content-length'] || '0', 10);
+  let downloaded = 0;
+  const file = fs.createWriteStream(filepath);
+  res.pipe(file);
+  res.on('data', (chunk) => {
+    downloaded += chunk.length;
+    if (total > 0 && mainWindow) {
+      const pct = Math.round((downloaded / total) * 100);
+      mainWindow.webContents.send('download:progress', pct);
+    }
+  });
+  file.on('finish', () => {
+    file.close();
+    resolve({ success: true, path: filepath });
+  });
+  file.on('error', (e) => { fs.unlink(filepath, () => {}); resolve({ success: false, error: e.message }); });
+}
+
+ipcMain.handle('game:extract', async (_, zipPath, destDir) => {
+  try {
+    if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+    const zip = new AdmZip(zipPath);
+    zip.extractAllTo(destDir, true);
+    const files = [];
+    function walk(dir) {
+      fs.readdirSync(dir).forEach(f => {
+        const full = path.join(dir, f);
+        if (fs.statSync(full).isDirectory()) walk(full);
+        else files.push(full);
+      });
+    }
+    walk(destDir);
+    return { success: true, files, extractedDir: destDir };
+  } catch (e) { return { success: false, error: e.message }; }
+});

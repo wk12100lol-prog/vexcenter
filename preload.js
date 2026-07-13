@@ -16,9 +16,12 @@ contextBridge.exposeInMainWorld('VexCenter', {
     launch: (gameId, exePath) => ipcRenderer.invoke('game:launch', gameId, exePath),
     selectInstallPath: () => ipcRenderer.invoke('game:select-install-path'),
     selectExecutable: () => ipcRenderer.invoke('game:select-executable'),
+    download: (url, destDir) => ipcRenderer.invoke('game:download', url, destDir),
+    extract: (zipPath, destDir) => ipcRenderer.invoke('game:extract', zipPath, destDir),
   },
   shell: {
     openExternal: (url) => ipcRenderer.invoke('shell:open-external', url),
   },
+  onDownloadProgress: (cb) => ipcRenderer.on('download:progress', (_, pct) => cb(pct)),
   platform: process.platform,
 });

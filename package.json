@@ -7,10 +7,18 @@
     "start": "electron .",
     "dev": "electron . --dev"
   },
-  "keywords": ["steam", "gaming", "platform", "electron"],
+  "keywords": [
+    "steam",
+    "gaming",
+    "platform",
+    "electron"
+  ],
   "author": "VexCenter Team",
   "license": "MIT",
   "devDependencies": {
     "electron": "^33.0.0"
+  },
+  "dependencies": {
+    "adm-zip": "^0.6.0"
   }
 }

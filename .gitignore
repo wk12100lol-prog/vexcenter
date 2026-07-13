@@ -7,3 +7,6 @@ uploads/games/*
 !uploads/games/.gitkeep
 .DS_Store
 Thumbs.db
+
+.vercel
+.env*
