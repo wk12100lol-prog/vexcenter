@@ -12,13 +12,20 @@ class Database {
                     PDO::ATTR_EMULATE_PREPARES => false,
                 ];
                 // TiDB/PlanetScale SSL
-                if (getenv('DB_SSL') !== 'false') {
+                $sslMode = getenv('DB_SSL');
+                if ($sslMode === 'false' || $sslMode === '0' || $sslMode === 'no') {
+                    // non-SSL
+                } elseif ($sslMode === 'skip-verify' || $sslMode === 'true' || $sslMode === '1' || $sslMode === false) {
                     $opts[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+                } else {
+                    $opts[PDO::MYSQL_ATTR_SSL_CA] = $sslMode;
+                    $opts[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = true;
                 }
                 self::$instance = new PDO($dsn, DB_USER, DB_PASS, $opts);
             } catch (PDOException $e) {
-                Logger::error('Database connection failed: ' . $e->getMessage(), ['host' => DB_HOST, 'db' => DB_NAME]);
-                Response::error(500, 'Database connection failed');
+                $msg = $e->getMessage();
+                Logger::error('Database connection failed: ' . $msg, ['host' => DB_HOST, 'db' => DB_NAME, 'port' => DB_PORT]);
+                Response::error(500, 'Database: ' . $msg);
                 exit;
             }
         }
