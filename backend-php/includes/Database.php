@@ -11,15 +11,23 @@ class Database {
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                     PDO::ATTR_EMULATE_PREPARES => false,
                 ];
-                // TiDB/PlanetScale SSL
-                $sslMode = getenv('DB_SSL');
-                if ($sslMode === 'false' || $sslMode === '0' || $sslMode === 'no') {
-                    // non-SSL
-                } elseif ($sslMode === 'skip-verify' || $sslMode === 'true' || $sslMode === '1' || $sslMode === false) {
-                    $opts[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
-                } else {
-                    $opts[PDO::MYSQL_ATTR_SSL_CA] = $sslMode;
-                    $opts[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = true;
+                // TiDB wymaga TLS
+                $caPaths = [
+                    '/etc/ssl/certs/ca-certificates.crt',
+                    '/etc/pki/tls/certs/ca-bundle.crt',
+                    '/etc/ssl/ca-bundle.pem',
+                    '/etc/pki/tls/cacert.pem',
+                ];
+                $caFile = null;
+                foreach ($caPaths as $p) { if (file_exists($p)) { $caFile = $p; break; } }
+                if ($caFile) {
+                    if (class_exists('Pdo\\Mysql')) {
+                        $opts[constant('Pdo\\Mysql::ATTR_SSL_CA')] = $caFile;
+                        $opts[constant('Pdo\\Mysql::ATTR_SSL_VERIFY_SERVER_CERT')] = false;
+                    } else {
+                        @$opts[PDO::MYSQL_ATTR_SSL_CA] = $caFile;
+                        @$opts[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+                    }
                 }
                 self::$instance = new PDO($dsn, DB_USER, DB_PASS, $opts);
             } catch (PDOException $e) {
