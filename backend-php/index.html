@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VexCenter — Gaming Platform</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #050508;
+      color: rgba(255,255,255,0.85);
+      overflow-x: hidden;
+    }
+    /* Animated BG */
+    #bg {
+      position: fixed; inset: 0; z-index: 0;
+      overflow: hidden; pointer-events: none;
+    }
+    #bg .glow {
+      position: absolute; border-radius: 50%; filter: blur(100px);
+      animation: drift 14s ease-in-out infinite alternate;
+    }
+    #bg .glow:nth-child(1) { width: 600px; height: 600px; background: #7c3aed; top: -20%; left: -10%; }
+    #bg .glow:nth-child(2) { width: 500px; height: 500px; background: #ec4899; bottom: -20%; right: -10%; animation-delay: -5s; }
+    #bg .glow:nth-child(3) { width: 400px; height: 400px; background: #06b6d4; top: 40%; left: 60%; opacity: 0.4; animation-delay: -10s; }
+    @keyframes drift {
+      0% { transform: translate(0,0) scale(1); }
+      100% { transform: translate(80px,-60px) scale(1.3); }
+    }
+    #bg .grid {
+      position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    /* Particles stream */
+    #bg .stream {
+      position: absolute; left: 50%; top: 0; width: 2px; height: 100%;
+      background: linear-gradient(to bottom, transparent, rgba(124,58,237,0.08), transparent);
+    }
+    #bg .particle {
+      position: absolute; border-radius: 50%;
+      background: var(--c, #7c3aed);
+      width: var(--s, 3px); height: var(--s, 3px);
+      box-shadow: 0 0 var(--g, 8px) var(--c, #7c3aed);
+      left: var(--x, 50%); top: -10px;
+      animation: fall var(--d, 8s) linear infinite;
+      animation-delay: var(--dl, 0s);
+    }
+    @keyframes fall {
+      0% { transform: translateY(0) scale(0.5); opacity: 0; }
+      10% { opacity: 0.8; }
+      90% { opacity: 0.8; }
+      100% { transform: translateY(110vh) scale(1.2); opacity: 0; }
+    }
+    /* Content */
+    .content { position: relative; z-index: 1; }
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 40px; max-width: 1200px; margin: 0 auto;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 20px; font-weight: 800;
+      background: linear-gradient(135deg,#7c3aed,#a855f7,#ec4899);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    .nav-links a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .2s; }
+    .nav-links a:hover { color: #fff; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px;
+      border-radius: 8px; font-weight: 600; font-size: 14px;
+      text-decoration: none; cursor: pointer; border: none;
+      transition: all .2s;
+    }
+    .btn-primary { background: linear-gradient(135deg,#7c3aed,#6d28d9); color: #fff; box-shadow: 0 4px 20px rgba(124,58,237,0.3); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(124,58,237,0.4); }
+    .btn-ghost { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.06); }
+    .btn-ghost:hover { background: rgba(255,255,255,0.08); }
+    .btn-lg { padding: 14px 32px; font-size: 16px; border-radius: 10px; }
+
+    .hero {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 1100px; margin: 40px auto 0; padding: 0 40px; gap: 40px;
+    }
+    .hero-text { flex: 1; }
+    .hero-text h1 {
+      font-size: 52px; font-weight: 900; line-height: 1.1; letter-spacing: -1.5px;
+      background: linear-gradient(135deg, #fff 30%, #a78bfa 70%, #f472b6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+    }
+    .hero-text p { font-size: 17px; color: rgba(255,255,255,0.4); line-height: 1.7; max-width: 480px; margin-bottom: 28px; }
+    .hero-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    .hero-visual {
+      flex-shrink: 0; width: 340px; height: 340px;
+      background: radial-gradient(circle at 30% 30%, rgba(124,58,237,0.12), transparent 60%);
+      border-radius: 30px; border: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(20px);
+      position: relative;
+    }
+    .hero-visual .hex-big {
+      width: 120px; height: 120px;
+      background: linear-gradient(135deg,#7c3aed,#a855f7,#ec4899);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      animation: spin 20s linear infinite;
+      filter: drop-shadow(0 0 60px rgba(124,58,237,0.3));
+    }
+    .hero-visual .hex-big-inner {
+      position: absolute; width: 65px; height: 65px;
+      background: #050508;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      animation: spinReverse 20s linear infinite;
+    }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes spinReverse { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+
+    .features {
+      max-width: 1100px; margin: 80px auto; padding: 0 40px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px;
+    }
+    .feature {
+      background: rgba(12,12,28,0.5); backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.04); border-radius: 14px;
+      padding: 24px; text-align: center;
+    }
+    .feature .icon { font-size: 36px; margin-bottom: 12px; }
+    .feature h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .feature p { font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.5; }
+
+    .download-section {
+      max-width: 600px; margin: 60px auto; padding: 48px 40px; text-align: center;
+      background: rgba(12,12,28,0.5); backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.04); border-radius: 20px;
+    }
+    .download-section h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+    .download-section p { color: rgba(255,255,255,0.4); margin-bottom: 24px; }
+    .download-section .version { font-size: 12px; color: rgba(255,255,255,0.2); margin-top: 12px; }
+
+    .footer {
+      text-align: center; padding: 32px; font-size: 13px; color: rgba(255,255,255,0.15);
+      border-top: 1px solid rgba(255,255,255,0.04); max-width: 1100px; margin: 0 auto;
+    }
+    @media (max-width: 768px) {
+      .hero { flex-direction: column; text-align: center; }
+      .hero-text p { max-width: 100%; }
+      .hero-buttons { justify-content: center; }
+      .hero-visual { width: 240px; height: 240px; }
+      nav { padding: 12px 20px; }
+      .hero { padding: 0 20px; }
+      .features { padding: 0 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="bg">
+    <div class="glow"></div><div class="glow"></div><div class="glow"></div>
+    <div class="grid"></div>
+    <div class="stream"></div>
+    <div class="particle" style="--c:#7c3aed;--s:3px;--g:8px;--x:calc(50% - 40px);--d:6s;--dl:0s;"></div>
+    <div class="particle" style="--c:#a855f7;--s:4px;--g:10px;--x:calc(50% - 20px);--d:8s;--dl:1.5s;"></div>
+    <div class="particle" style="--c:#ec4899;--s:2px;--g:6px;--x:50%;--d:7s;--dl:0.5s;"></div>
+    <div class="particle" style="--c:#06b6d4;--s:3px;--g:8px;--x:calc(50% + 20px);--d:9s;--dl:2s;"></div>
+    <div class="particle" style="--c:#8b5cf6;--s:5px;--g:12px;--x:calc(50% + 40px);--d:7.5s;--dl:1s;"></div>
+    <div class="particle" style="--c:#f472b6;--s:2px;--g:6px;--x:calc(50% - 60px);--d:8.5s;--dl:3s;"></div>
+    <div class="particle" style="--c:#7c3aed;--s:4px;--g:10px;--x:calc(50% + 60px);--d:6.5s;--dl:2.5s;"></div>
+  </div>
+  <div class="content">
+    <nav>
+      <div class="logo">⬡ VexCenter</div>
+      <div class="nav-links">
+        <a href="#features">Funkcje</a>
+        <a href="#download">Pobierz</a>
+        <a href="https://vexcenter.xo.je/api/games" target="_blank">API</a>
+      </div>
+    </nav>
+    <section class="hero">
+      <div class="hero-text">
+        <h1>Twoja nowa<br>platforma gier</h1>
+        <p>Odkrywaj, graj i dziel się swoimi grami. VexCenter to otwarta platforma dla graczy i twórców.</p>
+        <div class="hero-buttons">
+          <a href="#download" class="btn btn-primary btn-lg">Pobierz aplikację</a>
+          <a href="#features" class="btn btn-ghost btn-lg">Dowiedz się więcej</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hex-big"></div>
+        <div class="hex-big-inner"></div>
+      </div>
+    </section>
+    <section class="features" id="features">
+      <div class="feature"><div class="icon">🎮</div><h3>Biblioteka gier</h3><p>Zarządzaj swoją kolekcją i uruchamiaj gry jednym kliknięciem.</p></div>
+      <div class="feature"><div class="icon">🛒</div><h3>Sklep</h3><p>Przeglądaj i pobieraj gry od społeczności VexCenter.</p></div>
+      <div class="feature"><div class="icon">👥</div><h3>Znajomi</h3><p>Dodawaj znajomych, sprawdzaj ich status i grajcie razem.</p></div>
+      <div class="feature"><div class="icon">🛠</div><h3>Dla twórców</h3><p>Publikuj własne gry i dziel się nimi z tysiącami graczy.</p></div>
+      <div class="feature"><div class="icon">⭐</div><h3>Opinie i oceny</h3><p>Oceniaj gry i pisz recenzje, pomagaj innym w wyborze.</p></div>
+      <div class="feature"><div class="icon">🔒</div><h3>Weryfikacja</h3><p>System weryfikacji twórców i zatwierdzania gier przez admina.</p></div>
+    </section>
+    <section class="download-section" id="download">
+      <h2>Pobierz VexCenter</h2>
+      <p>Zainstaluj aplikację na swoim komputerze i dołącz do społeczności.</p>
+      <a href="VexCenter-Setup.exe" class="btn btn-primary btn-lg" onclick="alert('Plik instalacyjny wkrótce dostępny. Na razie uruchom aplikację przez: npm start'); return false;">📥 Pobierz dla Windows</a>
+      <div class="version">Wersja 1.0.0 • Darmowa • Open Source</div>
+    </section>
+    <footer class="footer">© 2026 VexCenter. Wszelkie prawa zastrzeżone.</footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "vexcenter",
+  "version": "1.0.0",
+  "description": "VexCenter - platforma dystrybucji gier cyfrowych",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "keywords": ["steam", "gaming", "platform", "electron"],
+  "author": "VexCenter Team",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}

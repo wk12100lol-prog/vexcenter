@@ -1,0 +1,19 @@
+RewriteEngine On
+RewriteBase /
+
+# Pozwól na bezpośredni dostęp do plików i katalogów
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Diagnostyka
+RewriteRule ^api/ping$ api/ping.php [L,QSA]
+
+# Przekieruj wszystkie /api/* żądania do api/index.php
+RewriteRule ^api/(.*)$ api/index.php [QSA,L]
+
+# Bezpieczeństwo
+Options -Indexes
+<FilesMatch "\.(sql|md|env)$">
+  Require all denied
+</FilesMatch>

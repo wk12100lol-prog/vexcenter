@@ -1,0 +1,58 @@
+:root {
+  --black: #050508;
+  --black-soft: #08080f;
+  --glass-bg: rgba(12, 12, 28, 0.55);
+  --glass-bg-hover: rgba(20, 20, 45, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-border-hover: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+  --purple-900: #140326;
+  --purple-800: #2a0752;
+  --purple-700: #4512a0;
+  --purple-600: #5b21b6;
+  --purple-500: #7c3aed;
+  --purple-400: #8b5cf6;
+  --purple-300: #a78bfa;
+  --purple-200: #c4b5fd;
+  --purple-100: #ddd6fe;
+
+  --cyan-500: #06b6d4;
+  --cyan-400: #22d3ee;
+  --cyan-300: #67e8f9;
+  --pink-500: #ec4899;
+  --pink-400: #f472b6;
+  --green-500: #10b981;
+  --green-400: #34d399;
+  --yellow-500: #f59e0b;
+  --yellow-400: #fbbf24;
+  --red-500: #ef4444;
+  --red-400: #f87171;
+
+  --gradient-accent: linear-gradient(135deg, #7c3aed, #a855f7, #ec4899);
+  --gradient-primary: linear-gradient(135deg, #7c3aed, #6d28d9);
+  --gradient-hero: linear-gradient(160deg, #0d0d2b 0%, #050508 40%, #0a0a1a 100%);
+
+  --sidebar-w: 240px;
+  --header-h: 52px;
+  --titlebar-h: 30px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --fs-xxs: 10px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-base: 14px;
+  --fs-md: 15px;
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+  --fs-2xl: 28px;
+  --fs-3xl: 36px;
+
+  --t-fast: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --t-normal: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --t-spring: 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
