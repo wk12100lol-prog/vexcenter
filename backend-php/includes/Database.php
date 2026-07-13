@@ -12,22 +12,15 @@ class Database {
                     PDO::ATTR_EMULATE_PREPARES => false,
                 ];
                 // TiDB wymaga TLS
-                $caPaths = [
-                    '/etc/ssl/certs/ca-certificates.crt',
-                    '/etc/pki/tls/certs/ca-bundle.crt',
-                    '/etc/ssl/ca-bundle.pem',
-                    '/etc/pki/tls/cacert.pem',
-                ];
-                $caFile = null;
-                foreach ($caPaths as $p) { if (file_exists($p)) { $caFile = $p; break; } }
+                $bundledCa = __DIR__ . '/cacert.pem';
+                $caFile = file_exists($bundledCa) ? $bundledCa : null;
+                foreach (['/etc/ssl/certs/ca-certificates.crt','/etc/pki/tls/certs/ca-bundle.crt'] as $p) {
+                    if ($caFile) break;
+                    if (file_exists($p)) { $caFile = $p; }
+                }
                 if ($caFile) {
-                    if (class_exists('Pdo\\Mysql')) {
-                        $opts[constant('Pdo\\Mysql::ATTR_SSL_CA')] = $caFile;
-                        $opts[constant('Pdo\\Mysql::ATTR_SSL_VERIFY_SERVER_CERT')] = false;
-                    } else {
-                        @$opts[PDO::MYSQL_ATTR_SSL_CA] = $caFile;
-                        @$opts[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
-                    }
+                    $opts[PDO::MYSQL_ATTR_SSL_CA] = $caFile;
+                    @$opts[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
                 }
                 self::$instance = new PDO($dsn, DB_USER, DB_PASS, $opts);
             } catch (PDOException $e) {
