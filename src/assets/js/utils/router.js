@@ -26,6 +26,8 @@ class VexRouter {
     } catch (e) {
       console.error('[Router] renderFn error:', e);
     }
+    const pageEl = this.container.querySelector('.page');
+    if (pageEl) pageEl.classList.add('active');
     document.querySelectorAll('.sidebar-item').forEach((item) => {
       const route = item.getAttribute('data-route');
       item.classList.toggle('active', route === name);
