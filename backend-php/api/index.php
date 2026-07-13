@@ -22,12 +22,17 @@ require_once __DIR__ . '/../includes/Logger.php';
 
 // Vercel: REQUEST_URI może być inny, próbujemy różnych źródeł
 $uri = '';
+$reqUri = $_SERVER['REQUEST_URI'] ?? '';
 if (!empty($_SERVER['PATH_INFO'])) {
     $uri = $_SERVER['PATH_INFO'];
-} elseif (!empty($_SERVER['REQUEST_URI'])) {
-    $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $qPos = strpos($uri, '?');
+    if ($qPos !== false) $uri = substr($uri, 0, $qPos);
+} elseif (!empty($reqUri)) {
+    $uri = parse_url($reqUri, PHP_URL_PATH);
 } elseif (!empty($_SERVER['ORIG_PATH_INFO'])) {
     $uri = $_SERVER['ORIG_PATH_INFO'];
+    $qPos = strpos($uri, '?');
+    if ($qPos !== false) $uri = substr($uri, 0, $qPos);
 }
 $uri = preg_replace('#^/api#', '', $uri);
 $uri = trim($uri, '/');
@@ -52,6 +57,7 @@ try {
         case 'notifications': require __DIR__ . '/notifications/router.php'; break;
         case 'announcements': require __DIR__ . '/announcements.php'; break;
         case 'ping':        require __DIR__ . '/ping.php'; break;
+        case 'image':       require __DIR__ . '/image.php'; break;
         default:            Response::error(404, 'Endpoint not found');
     }
 } catch (Exception $e) {

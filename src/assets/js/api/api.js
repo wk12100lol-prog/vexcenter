@@ -80,6 +80,7 @@ class VexAPI {
   getProfile() { return this.get('user/profile'); }
   getGames(p = {}) { return this.get('games?' + new URLSearchParams(p).toString()); }
   getGame(id) { return this.get(`games/${id}`); }
+  searchGames(q) { return this.get('games/search?q=' + encodeURIComponent(q)); }
   uploadGame(fd) { return this.post('games', fd); }
   getDownloads(gameId) { return this.get(`games/${gameId}/downloads`); }
   addDownload(gameId, data) { return this.post(`games/${gameId}/downloads`, data); }
@@ -115,6 +116,9 @@ class VexAPI {
   getAnnouncements() { return this.get('announcements'); }
   createAnnouncement(data) { return this.post('announcements', data); }
   hideAnnouncement(id) { return this.delete(`announcements/${id}`); }
+  deleteGame(gameId) { return this.post(`admin/games/delete`, { game_id: gameId }); }
+  deleteUser(userId) { return this.post(`admin/users/delete`, { user_id: userId }); }
+  updateUserRole(userId, role) { return this.post(`admin/users/role`, { user_id: userId, role }); }
 }
 
 const api = new VexAPI();

@@ -3,7 +3,8 @@ $currentUser = Auth::getUserFromToken();
 $userId = $currentUser ? $currentUser['id'] : 0;
 
 $game = Database::fetch(
-    "SELECT g.*, u.username as developer_name, u.avatar as developer_avatar
+    "SELECT g.id, g.user_id, g.title, g.description, g.thumbnail, g.price, g.category, g.tags, g.rating, g.status, g.is_featured, g.game_file, g.download_count, g.created_at, g.updated_at,
+            u.username as developer_name, u.avatar as developer_avatar
      FROM games g
      LEFT JOIN users u ON g.user_id = u.id
      WHERE g.id = ? AND (g.status = 'approved' OR g.user_id = ?)",

@@ -85,7 +85,7 @@ class AuthPage {
         router.navigate('store');
       }
     } catch (err) {
-      alert(`Błąd: ${err.message}`);
+      showModal('Błąd', err.message, 'error');
     } finally {
       btn.disabled = false;
       btn.textContent = this.isLogin ? 'Zaloguj się' : 'Utwórz konto';

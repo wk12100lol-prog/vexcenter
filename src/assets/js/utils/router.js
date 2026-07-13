@@ -12,7 +12,7 @@ class VexRouter {
     console.log('[Router] registered', name);
   }
 
-  navigate(name, params = null) {
+  async navigate(name, params = null) {
     console.log('[Router] navigate to', name, 'current:', this.currentRoute);
     if (this.currentRoute === name && !params) return;
     const renderFn = this.routes[name];
@@ -21,7 +21,7 @@ class VexRouter {
     if (!this.container) { console.error('[Router] no container!'); return; }
     this.container.innerHTML = '';
     try {
-      renderFn(this.container, params);
+      await renderFn(this.container, params);
       console.log('[Router] renderFn called for', name);
     } catch (e) {
       console.error('[Router] renderFn error:', e);

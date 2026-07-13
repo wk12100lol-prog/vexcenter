@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const https = require('https');
 const http = require('http');
 const AdmZip = require('adm-zip');
+const { autoUpdater } = require('electron-updater');
 
 let mainWindow;
 const ICON_PATH = path.join(__dirname, 'src', 'assets', 'images', 'icon.png');
@@ -43,9 +44,60 @@ function createWindow() {
   if (process.argv.includes('--dev')) mainWindow.webContents.openDevTools();
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  initAutoUpdater();
+});
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
+
+function initAutoUpdater() {
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('checking-for-update', () => {
+    mainWindow?.webContents.send('update:status', 'Sprawdzanie aktualizacji...');
+  });
+
+  autoUpdater.on('update-available', (info) => {
+    mainWindow?.webContents.send('update:available', info);
+  });
+
+  autoUpdater.on('update-not-available', () => {
+    mainWindow?.webContents.send('update:status', 'Aplikacja jest aktualna');
+  });
+
+  autoUpdater.on('download-progress', (p) => {
+    mainWindow?.webContents.send('update:progress', p.percent);
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    mainWindow?.webContents.send('update:downloaded');
+  });
+
+  autoUpdater.on('error', (err) => {
+    console.error('[AutoUpdater]', err?.message || err);
+  });
+
+  setTimeout(() => {
+    try { autoUpdater.checkForUpdates(); } catch {}
+  }, 5000);
+}
+
+ipcMain.handle('update:check', async () => {
+  try { await autoUpdater.checkForUpdates(); return { success: true }; }
+  catch (e) { return { success: false, error: e.message }; }
+});
+
+ipcMain.handle('update:download', async () => {
+  try { autoUpdater.downloadUpdate(); return { success: true }; }
+  catch (e) { return { success: false, error: e.message }; }
+});
+
+ipcMain.handle('update:install', async () => {
+  try { autoUpdater.quitAndInstall(); return { success: true }; }
+  catch (e) { return { success: false, error: e.message }; }
+});
 
 ipcMain.on('window:minimize', () => mainWindow?.minimize());
 ipcMain.on('window:maximize', () => { if (mainWindow?.isMaximized()) mainWindow.unmaximize(); else mainWindow?.maximize(); });

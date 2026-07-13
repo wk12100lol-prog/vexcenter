@@ -35,6 +35,12 @@ class SidebarComponent {
             Panel Admina
           </a>
         </div>
+        <div class="sidebar-section" style="margin-top:auto;padding-top:12px;border-top:1px solid var(--glass-border);">
+          <a class="sidebar-item" id="sidebar-logout" href="#" style="color:var(--red-400);">
+            <span class="icon"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+            Wyloguj
+          </a>
+        </div>
       </nav>
     `;
   }

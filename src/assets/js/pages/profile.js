@@ -18,7 +18,7 @@ class ProfilePage {
       <div class="page profile-page">
         <div class="profile-header-card">
           <div class="profile-avatar" id="profile-avatar">
-            ${user?.avatar ? '<img src="'+user.avatar+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />' : (user?.username ? user.username.charAt(0).toUpperCase() : 'V')}
+            ${user?.avatar ? '<img src="'+img(user.avatar)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />' : (user?.username ? user.username.charAt(0).toUpperCase() : 'V')}
           </div>
           <div class="profile-info">
             <h2 id="profile-username">${user?.username || 'Niezalogowany'}</h2>
@@ -94,7 +94,7 @@ class ProfilePage {
         ${fl.length ? fl.map(f => `
           <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--glass-border);">
             <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;overflow:hidden;${f.avatar ? 'background:none;' : ''}">
-              ${f.avatar ? '<img src="'+f.avatar+'" style="width:100%;height:100%;object-fit:cover;" />' : (f.username ? f.username.charAt(0).toUpperCase() : '?')}
+              ${f.avatar ? '<img src="'+img(f.avatar)+'" style="width:100%;height:100%;object-fit:cover;" />' : (f.username ? f.username.charAt(0).toUpperCase() : '?')}
             </div>
             <div style="flex:1;">
               <div style="font-size:13px;font-weight:600;">${f.username}</div>
@@ -151,7 +151,7 @@ class ProfilePage {
           results.innerHTML = users.map(u => `
             <div style="display:flex;align-items:center;gap:12px;padding:8px;border-radius:8px;cursor:pointer;" class="af-user" data-id="${u.id}" data-name="${u.username}">
               <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;overflow:hidden;${u.avatar ? 'background:none;' : ''}">
-                ${u.avatar ? '<img src="'+u.avatar+'" style="width:100%;height:100%;object-fit:cover;" />' : u.username.charAt(0).toUpperCase()}
+                ${u.avatar ? '<img src="'+img(u.avatar)+'" style="width:100%;height:100%;object-fit:cover;" />' : u.username.charAt(0).toUpperCase()}
               </div>
               <div style="flex:1;font-size:13px;">${u.username}</div>
             </div>
@@ -162,10 +162,10 @@ class ProfilePage {
               const name = el.getAttribute('data-name');
               try {
                 await api.addFriend(id);
-                alert('Wysłano zaproszenie do ' + name + '!');
+                showModal('Sukces', 'Wysłano zaproszenie do ' + name + '!', 'success');
                 modal.remove();
               } catch (err) {
-                alert(err.message);
+                showModal('Błąd', err.message, 'error');
               }
             });
           });

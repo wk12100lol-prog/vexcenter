@@ -32,9 +32,9 @@ class GameCardComponent {
 
     card.innerHTML = `
       <div class="game-card ${featured ? 'featured' : ''}" data-game-id="${game.id}">
-        <div class="thumbnail">
-          <div class="thumb-art" style="${hasImage ? '' : `background: ${artBg};`}">
-            ${hasImage ? `<img src="${game.thumbnail}" alt="${game.title}" loading="lazy" />` : ''}
+        <div class="thumbnail" id="thumb-${game.id}">
+          <div class="thumb-art" style="background:${artBg};">
+            ${hasImage ? `<img src="${img(game.thumbnail)}" alt="${game.title}" loading="lazy" onerror="this.style.display='none'" />` : ''}
           </div>
           <div class="overlay"></div>
           <div class="play-hint">
@@ -64,7 +64,7 @@ class GameCardComponent {
     `;
 
     card.querySelector('.game-card').addEventListener('click', () => {
-      router.navigate('store');
+      router.navigate('game', { id: game.id });
     });
 
     return card;

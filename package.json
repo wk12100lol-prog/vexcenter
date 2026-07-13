@@ -5,7 +5,56 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dev": "electron . --dev"
+    "dev": "electron . --dev",
+    "build": "electron-builder build --win --x64 --publish never",
+    "build:dir": "electron-builder build --win --x64 --dir",
+    "publish": "electron-builder build --win --x64 --publish always",
+    "release": "electron-builder build --win --x64 --publish always"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wk12100lol-prog/vexcenter"
+  },
+  "build": {
+    "appId": "com.vexcenter.app",
+    "productName": "VexCenter",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "src/assets/images/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "src/assets/images/icon.ico",
+      "uninstallerIcon": "src/assets/images/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "VexCenter"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "wk12100lol-prog",
+        "repo": "vexcenter",
+        "releaseType": "release"
+      }
+    ]
   },
   "keywords": [
     "steam",
@@ -16,9 +65,11 @@
   "author": "VexCenter Team",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^33.0.0"
+    "electron": "^33.0.0",
+    "electron-builder": "^26.0.0"
   },
   "dependencies": {
-    "adm-zip": "^0.6.0"
+    "adm-zip": "^0.6.0",
+    "electron-updater": "^6.0.0"
   }
 }

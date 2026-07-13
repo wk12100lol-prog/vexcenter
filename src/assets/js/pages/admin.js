@@ -11,7 +11,7 @@ class AdminPage {
         <div class="page-header"><h1>Panel Administracyjny</h1></div>
         <div style="display:flex;gap:24px;">
           <div style="width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:4px;">
-            ${[['dashboard','📊 Dashboard'],['games','🎮 Gry'],['developers','🛠 Deweloperzy'],['users','👥 Użytkownicy'],['announcements','📢 Ogłoszenia']].map(([t,l],i) =>
+            ${[['dashboard','📊 Dashboard'],['games','🎮 Gry'],['allgames','🎯 Wszystkie gry'],['developers','🛠 Deweloperzy'],['users','👥 Użytkownicy'],['announcements','📢 Ogłoszenia']].map(([t,l],i) =>
               `<button class="btn admin-tab ${i===0?'btn-primary':'btn-ghost'}" data-tab="${t}" style="text-align:left;justify-content:flex-start;padding:10px 14px;border-radius:8px;">${l}</button>`
             ).join('')}
           </div>
@@ -33,6 +33,7 @@ class AdminPage {
     el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
     if (this.tab === 'dashboard') this.renderDashboard(el);
     else if (this.tab === 'games') this.renderGames(el);
+    else if (this.tab === 'allgames') this.renderAllGames(el);
     else if (this.tab === 'developers') this.renderDevelopers(el);
     else if (this.tab === 'users') this.renderUsers(el);
     else if (this.tab === 'announcements') this.renderAnnouncements(el);
@@ -69,6 +70,7 @@ class AdminPage {
               <div style="display:flex;gap:8px;">
                 <button class="btn btn-sm btn-primary" data-app="${g.id}">Zatwierdź</button>
                 <button class="btn btn-sm btn-ghost" data-rej="${g.id}" style="color:var(--red-400);">Odrzuć</button>
+                <button class="btn btn-sm btn-ghost" data-del="${g.id}" style="color:var(--red-400);">Usuń</button>
               </div>
             </div>
           `).join('') : '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Brak gier oczekujących.</p>'}
@@ -80,6 +82,37 @@ class AdminPage {
       el.querySelectorAll('[data-rej]').forEach(b => b.addEventListener('click', async () => {
         const r = prompt('Powód odrzucenia:');
         if (r !== null) { await api.rejectGame(b.dataset.rej, r); this.renderGames(el); }
+      }));
+      el.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
+        if (!(await showConfirm('Potwierdzenie', 'Na pewno usunąć tę grę?'))) return;
+        await api.deleteGame(b.dataset.del); this.renderGames(el);
+      }));
+    } catch { el.innerHTML = '<div class="empty-state"><p>Błąd ładowania</p></div>'; }
+  }
+
+  async renderAllGames(el) {
+    try {
+      const d = await api.getGames({ limit: 100 });
+      const games = d.items || d.games || [];
+      el.innerHTML = `
+        <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:24px;">
+          <h3 style="margin-bottom:16px;">Wszystkie gry (${games.length})</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;">
+            ${games.map(g => `
+              <div style="padding:14px;border:1px solid var(--glass-border);border-radius:8px;background:rgba(255,255,255,0.02);display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <strong>${g.title}</strong><br>
+                  <span style="font-size:12px;color:rgba(255,255,255,0.3);">${g.developer_name||'Nieznany'} • ${g.created_at}</span>
+                </div>
+                <button class="btn btn-sm btn-ghost" data-del="${g.id}" style="color:var(--red-400);">Usuń</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      el.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
+        if (!(await showConfirm('Potwierdzenie', 'Na pewno usunąć tę grę?'))) return;
+        await api.deleteGame(b.dataset.del); this.renderAllGames(el);
       }));
     } catch { el.innerHTML = '<div class="empty-state"><p>Błąd ładowania</p></div>'; }
   }
@@ -125,17 +158,34 @@ class AdminPage {
       el.innerHTML = `
         <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:24px;">
           <h3 style="margin-bottom:16px;">Użytkownicy (${users.length})</h3>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;">
             ${users.map(u => `
-              <div style="padding:14px;border:1px solid var(--glass-border);border-radius:8px;background:rgba(255,255,255,0.02);">
-                <strong>${u.username}</strong><br>
-                <span style="font-size:12px;color:rgba(255,255,255,0.3);">${u.email}</span><br>
-                <span style="font-size:11px;color:rgba(255,255,255,0.2);">Rola: ${u.role} • ${u.created_at}</span>
+              <div style="padding:14px;border:1px solid var(--glass-border);border-radius:8px;background:rgba(255,255,255,0.02);display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <strong>${u.username}</strong><br>
+                  <span style="font-size:12px;color:rgba(255,255,255,0.3);">${u.email}</span><br>
+                  <span style="font-size:11px;color:rgba(255,255,255,0.2);">${u.created_at}</span>
+                </div>
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <select class="role-select" data-id="${u.id}" style="background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:6px;padding:4px 8px;font-size:12px;color:#fff;">
+                    ${['user','developer','admin'].map(r => `<option value="${r}" ${u.role===r?'selected':''}>${r}</option>`).join('')}
+                  </select>
+                  ${u.role !== 'admin' ? `<button class="btn btn-sm btn-ghost" data-del="${u.id}" style="color:var(--red-400);padding:4px 8px;font-size:12px;">Usuń</button>` : ''}
+                </div>
               </div>
             `).join('')}
           </div>
         </div>
       `;
+      el.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
+        if (!(await showConfirm('Potwierdzenie', 'Na pewno usunąć tego użytkownika? Usunięte zostaną też jego gry.'))) return;
+        await api.deleteUser(b.dataset.del); this.renderUsers(el);
+      }));
+      el.querySelectorAll('.role-select').forEach(s => s.addEventListener('change', async () => {
+        if (!(await showConfirm('Potwierdzenie', 'Zmienić rolę użytkownika na "' + s.value + '"?'))) { s.value = s.options[s.selectedIndex].defaultSelected ? s.value : ''; return; }
+        await api.updateUserRole(s.dataset.id, s.value);
+        this.renderUsers(el);
+      }));
     } catch { el.innerHTML = '<div class="empty-state"><p>Błąd ładowania</p></div>'; }
   }
 

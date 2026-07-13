@@ -126,11 +126,14 @@ class LibraryPage {
 
     document.getElementById('lib-add-manual-btn')?.addEventListener('click', () => this.showAddManualModal());
 
-    content.querySelectorAll('.btn-play').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const exe = btn.getAttribute('data-exe');
-        const name = btn.getAttribute('data-name');
-        this.launchGame(exe, name);
+    content.querySelectorAll('.game-card').forEach(card => {
+      const btn = card.querySelector('.btn-play');
+      if (btn) {
+        btn.addEventListener('click', (e) => { e.stopPropagation(); this.launchGame(btn.dataset.exe, btn.dataset.name); });
+      }
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-play') || e.target.closest('.btn-remove-custom')) return;
+        router.navigate('game', {id: parseInt(card.dataset.gameId)});
       });
     });
 
@@ -145,9 +148,10 @@ class LibraryPage {
 
   renderGameCard(g) {
     return `
-      <div class="game-card" onclick="router.navigate('game', {id:${g.id}})">
-        <div class="game-card-img" style="background:linear-gradient(135deg,#7c3aed20,#a855f720);${g.thumbnail ? 'background-image:url('+g.thumbnail+');background-size:cover;' : ''}">
-          ${!g.thumbnail ? '<div style="font-size:32px;opacity:0.3;display:flex;align-items:center;justify-content:center;height:100%;">🎮</div>' : ''}
+      <div class="game-card" data-game-id="${g.id}">
+        <div class="game-card-img" style="background:linear-gradient(135deg,#7c3aed20,#a855f720);position:relative;">
+          ${g.thumbnail ? '<img src="'+img(g.thumbnail)+'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display=\'none\'" />' : ''}
+          <div style="font-size:32px;opacity:0.3;display:flex;align-items:center;justify-content:center;height:100%;">🎮</div>
         </div>
         <div class="game-card-body">
           <h3 class="game-card-title">${g.title}</h3>
@@ -155,6 +159,7 @@ class LibraryPage {
             ${g.rating ? '<span>★ ' + g.rating + '</span>' : ''}
             <span>${g.price > 0 ? g.price.toFixed(2) + ' PLN' : 'Darmowa'}</span>
           </div>
+          ${g.installed && g.executable_path ? '<button class="btn btn-primary btn-sm btn-play" data-exe="'+g.executable_path+'" data-name="'+g.title+'" style="margin-top:10px;width:100%;">▶ Uruchom</button>' : ''}
         </div>
       </div>
     `;
@@ -225,15 +230,15 @@ class LibraryPage {
 
   launchGame(exePath, name) {
     if (!exePath) {
-      alert('Brak ścieżki do pliku wykonywalnego.');
+      showModal('Info', 'Brak ścieżki do pliku wykonywalnego.', 'info');
       return;
     }
     if (window.VexCenter?.game?.launch) {
       window.VexCenter.game.launch(null, exePath)
-        .then(r => { if (!r.success) alert('Błąd uruchamiania: ' + (r.error || 'Nieznany błąd')); })
-        .catch(e => alert('Błąd: ' + e.message));
+        .then(r => { if (!r.success) showModal('Błąd', r.error || 'Nieznany błąd', 'error'); })
+        .catch(e => showModal('Błąd', e.message, 'error'));
     } else {
-      alert('Funkcja uruchamiania dostępna tylko w aplikacji desktopowej.');
+      showModal('Info', 'Funkcja uruchamiania dostępna tylko w aplikacji desktopowej.', 'info');
     }
   }
 }

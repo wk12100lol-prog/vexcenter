@@ -1,0 +1,41 @@
+{
+  "name": "vexcenter-installer",
+  "version": "1.0.0",
+  "description": "VexCenter - Installer",
+  "author": "VexCenter Team",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder build --win --x64",
+    "build:msi": "electron-builder build --win --x64 --config.win.target=msi"
+  },
+  "build": {
+    "appId": "com.vexcenter.installer",
+    "productName": "VexCenter Installer",
+    "directories": { "output": "dist" },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "assets/**/*",
+      "package.json"
+    ],
+    "extraResources": [],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "msi", "arch": ["x64"] }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": true,
+      "installerIcon": "assets/icon.ico"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^26.0.0"
+  }
+}

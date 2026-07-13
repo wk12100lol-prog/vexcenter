@@ -6,6 +6,7 @@ class StorePage {
 
         <div class="hero-banner">
           <div class="hero-bg">
+            <img class="hero-banner-img" src="assets/images/hero-banner.png" alt="" onerror="this.style.display='none'">
             <div class="mesh"></div>
             <div class="grid-overlay"></div>
           </div>
@@ -58,10 +59,19 @@ class StorePage {
     this.loadFeatured();
     this.loadNewReleases();
     this.loadTopRated();
+
+    if (this._refreshInterval) clearInterval(this._refreshInterval);
+    this._refreshInterval = setInterval(() => {
+      if (!document.querySelector('.store-page')) return;
+      this.loadFeatured();
+      this.loadNewReleases();
+      this.loadTopRated();
+    }, 30000);
   }
 
   async loadFeatured() {
     const grid = document.getElementById('store-featured-grid');
+    if (!grid) return;
     const loading = document.createElement('div');
     loading.className = 'loading';
     loading.innerHTML = '<div class="spinner"></div>';
@@ -77,6 +87,7 @@ class StorePage {
 
   async loadNewReleases() {
     const grid = document.getElementById('store-new-grid');
+    if (!grid) return;
     const loading = document.createElement('div');
     loading.className = 'loading';
     loading.innerHTML = '<div class="spinner"></div>';
@@ -92,6 +103,7 @@ class StorePage {
 
   async loadTopRated() {
     const grid = document.getElementById('store-top-grid');
+    if (!grid) return;
     const loading = document.createElement('div');
     loading.className = 'loading';
     loading.innerHTML = '<div class="spinner"></div>';
@@ -124,13 +136,13 @@ class StorePage {
     } catch { bar.style.display = 'none'; }
   }
 
-  handleUpload() {
+  async handleUpload() {
     if (!api.isAuthenticated) {
-      alert('Zaloguj się, aby dodać grę.');
+      showModal('Info', 'Zaloguj się, aby dodać grę.', 'info');
       return;
     }
     if (!api.isDeveloper) {
-      if (confirm('Musisz zostać zweryfikowanym deweloperem. Przejść do ustawień?')) {
+      if (await showConfirm('Potwierdzenie', 'Musisz zostać zweryfikowanym deweloperem. Przejść do ustawień?')) {
         router.navigate('settings');
         setTimeout(() => {
           const devTab = document.querySelector('[data-tab="developer"]');
@@ -214,7 +226,7 @@ class StorePage {
         if (img) fd.append('image', img);
 
         const result = await api.uploadGame(fd);
-        alert('Gra została przesłana!');
+        showModal('Sukces', 'Gra została przesłana!', 'success');
         modal.remove();
         this.loadFeatured();
         this.loadNewReleases();

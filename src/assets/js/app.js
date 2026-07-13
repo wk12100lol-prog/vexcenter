@@ -141,7 +141,7 @@
         if (loginMode) {
           result = await api.login(email, password);
         } else {
-          if (!username) { alert('Podaj nazwę użytkownika'); btn.disabled = false; btn.textContent = 'Utwórz konto'; return; }
+          if (!username) { showModal('Info', 'Podaj nazwę użytkownika', 'info'); btn.disabled = false; btn.textContent = 'Utwórz konto'; return; }
           result = await api.register(username, email, password);
         }
 
@@ -156,7 +156,7 @@
           router.navigate('store');
         }
       } catch (err) {
-        alert('Błąd: ' + err.message);
+        showModal('Błąd', err.message, 'error');
       } finally {
         btn.disabled = false;
         btn.textContent = loginMode ? 'Zaloguj się' : 'Utwórz konto';
@@ -205,7 +205,16 @@
     initTitlebar();
     headerComponent.render();
     sidebarComponent.render();
+    document.getElementById('sidebar-logout')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      logout();
+    });
     registerRoutes();
+
+    // hide logo splash
+    const splash = document.getElementById('splash');
+    if (splash) splash.classList.add('hidden');
+
     router.init();
 
     if (api.token) {

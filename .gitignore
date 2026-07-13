@@ -5,6 +5,8 @@ logs/
 *.log
 uploads/games/*
 !uploads/games/.gitkeep
+installer/app/
+installer/dist/
 .DS_Store
 Thumbs.db
 

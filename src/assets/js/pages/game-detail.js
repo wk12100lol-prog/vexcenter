@@ -1,5 +1,7 @@
 class GameDetailPage {
-  async render(container, gameId) {
+  async render(container, params) {
+    const gameId = typeof params === 'object' ? params?.id : params;
+    if (!gameId) { container.innerHTML = '<div class="empty-state"><h3>Nieprawidłowe ID gry</h3></div>'; return; }
     container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
     try {
       const d = await api.getGame(gameId);
@@ -11,10 +13,11 @@ class GameDetailPage {
           <button class="btn btn-ghost btn-sm" id="back-to-store" style="margin-bottom:16px;">← Powrót do sklepu</button>
           <div style="display:flex;gap:24px;flex-wrap:wrap;">
             <div style="flex:1;min-width:300px;">
-              <div style="border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);aspect-ratio:16/9;background:var(--glass-bg);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
-                ${g.thumbnail ? `<img src="${g.thumbnail}" style="width:100%;height:100%;object-fit:cover;"/>` : `<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4"/><path d="M14 12h4"/><path d="M10 10v4"/></svg>`}
+              <div style="border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);aspect-ratio:16/9;background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(168,85,247,0.08));display:flex;align-items:center;justify-content:center;margin-bottom:16px;position:relative;">
+                ${g.thumbnail ? `<img src="${img(g.thumbnail)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'" />` : ''}
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4"/><path d="M14 12h4"/><path d="M10 10v4"/></svg>
               </div>
-              ${d.screenshots?.length ? `<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;">${d.screenshots.slice(0,6).map(s => `<div style="min-width:160px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;border:1px solid var(--glass-border);flex-shrink:0;"><img src="${s.url}" style="width:100%;height:100%;object-fit:cover;"/></div>`).join('')}</div>` : ''}
+              ${d.screenshots?.length ? `<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;">${d.screenshots.slice(0,6).map(s => `<div style="min-width:160px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;border:1px solid var(--glass-border);flex-shrink:0;"><img src="${img(s.url)}" style="width:100%;height:100%;object-fit:cover;"/></div>`).join('')}</div>` : ''}
             </div>
             <div style="flex:1;min-width:280px;">
               <h1 style="font-size:24px;font-weight:800;margin-bottom:4px;">${g.title}</h1>
@@ -85,9 +88,9 @@ class GameDetailPage {
       }));
       document.getElementById('review-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        if (!selectedRating) return alert('Wybierz ocenę!');
+        if (!selectedRating) return showModal('Info', 'Wybierz ocenę!', 'info');
         await api.submitReview(gameId, { rating: selectedRating, content: document.getElementById('review-content').value });
-        alert('Opinia dodana!');
+        showModal('Sukces', 'Opinia dodana!', 'success');
         this.render(container, gameId);
       });
 
@@ -95,21 +98,21 @@ class GameDetailPage {
 
       document.getElementById('btn-launch')?.addEventListener('click', async () => {
         const exe = d.installation?.executable_path;
-        if (!exe) return alert('Brak ścieżki do pliku wykonywalnego.');
+        if (!exe) return showModal('Info', 'Brak ścieżki do pliku wykonywalnego.', 'info');
         const result = await window.VexCenter.game.launch(gameId, exe);
-        if (!result.success) alert('Błąd: '+result.error);
+        if (!result.success) showModal('Błąd', result.error, 'error');
       });
 
       document.getElementById('btn-set-path')?.addEventListener('click', async () => {
         const exe = await window.VexCenter.game.selectExecutable();
         if (exe.canceled) return;
-        await api.registerInstall(gameId, '', exe.path);
-        alert('Ścieżka zaktualizowana!');
+        await api.registerInstall(gameId, d.installation?.install_path || null, exe.path);
+        showModal('Sukces', 'Ścieżka zaktualizowana!', 'success');
         this.render(container, gameId);
       });
 
       document.getElementById('btn-add-to-library')?.addEventListener('click', async () => {
-        try { await api.purchaseGame(gameId); alert('Dodano do biblioteki!'); } catch(e) { alert(e.message); }
+        try { await api.purchaseGame(gameId); showModal('Sukces', 'Dodano do biblioteki!', 'success'); } catch(e) { showModal('Błąd', e.message, 'error'); }
       });
 
     } catch { container.innerHTML = '<div class="empty-state"><h3>Błąd ładowania gry</h3></div>'; }
@@ -117,11 +120,11 @@ class GameDetailPage {
 
   async downloadAndInstall(container, gameId, game) {
     if (!game.game_file) {
-      alert('Brak linku do pobrania dla tej gry.');
+      showModal('Info', 'Brak linku do pobrania dla tej gry.', 'info');
       return;
     }
     if (!window.VexCenter?.game?.download || !window.VexCenter?.game?.extract) {
-      alert('Funkcja dostępna tylko w aplikacji desktopowej.');
+      showModal('Info', 'Funkcja dostępna tylko w aplikacji desktopowej.', 'info');
       return;
     }
 
@@ -161,7 +164,7 @@ class GameDetailPage {
         }
       } else {
         this._updateProgress(0, 'Rozpakuj ręcznie plik ' + downloadedFile);
-        alert('Plik ' + ext.toUpperCase() + ' nie może być automatycznie rozpakowany.\nRozpakuj go ręcznie z: ' + downloadedFile);
+        showModal('Info', 'Plik ' + ext.toUpperCase() + ' nie może być automatycznie rozpakowany.\nRozpakuj go ręcznie z: ' + downloadedFile, 'info');
       }
     }
 

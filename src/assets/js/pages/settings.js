@@ -52,7 +52,7 @@ class SettingsPage {
         <h3 style="margin-bottom:20px;">Awatar</h3>
         <div style="display:flex;align-items:center;gap:20px;">
           <div id="s-avatar-preview" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;flex-shrink:0;overflow:hidden;">
-            ${u.avatar ? '<img src="'+u.avatar+'" style="width:100%;height:100%;object-fit:cover;" />' : u.username.charAt(0).toUpperCase()}
+            ${u.avatar ? '<img src="'+img(u.avatar)+'" style="width:100%;height:100%;object-fit:cover;" />' : u.username.charAt(0).toUpperCase()}
           </div>
           <div>
             <input type="file" id="s-avatar-input" accept="image/*" style="display:none;" />
@@ -83,7 +83,7 @@ class SettingsPage {
       const body = { display_name: document.getElementById('s-display_name').value, status_message: document.getElementById('s-status_message').value, bio: document.getElementById('s-bio').value, website: document.getElementById('s-website').value };
       await api.updateSettings(body);
       headerComponent.updateUser(api.user);
-      alert('Zapisano!');
+      showModal('Sukces', 'Zapisano!', 'success');
     });
 
     document.getElementById('s-avatar-btn')?.addEventListener('click', () => {
@@ -99,13 +99,13 @@ class SettingsPage {
         const avatarUrl = result.avatar || result.data?.avatar;
         if (avatarUrl) {
           const preview = document.getElementById('s-avatar-preview');
-          preview.innerHTML = '<img src="'+avatarUrl+'" style="width:100%;height:100%;object-fit:cover;" />';
+          preview.innerHTML = '<img src="'+img(avatarUrl)+'" style="width:100%;height:100%;object-fit:cover;" />';
           api.user.avatar = avatarUrl;
           headerComponent.updateUser(api.user);
         }
-        alert('Awatar zaktualizowany!');
+        showModal('Sukces', 'Awatar zaktualizowany!', 'success');
       } catch (err) {
-        alert('Błąd: ' + err.message);
+        showModal('Błąd', err.message, 'error');
       }
     });
   }
@@ -125,7 +125,7 @@ class SettingsPage {
           <div>${fl.length ? fl.map(f => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--glass-border);">
             <div style="display:flex;align-items:center;gap:10px;">
               <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;overflow:hidden;${f.avatar ? 'background:none;' : ''}">
-                ${f.avatar ? '<img src="'+f.avatar+'" style="width:100%;height:100%;object-fit:cover;" />' : f.username.charAt(0).toUpperCase()}
+                ${f.avatar ? '<img src="'+img(f.avatar)+'" style="width:100%;height:100%;object-fit:cover;" />' : f.username.charAt(0).toUpperCase()}
               </div>
               <span>${f.username} ${f.status_message ? '<span style="color:rgba(255,255,255,0.3);font-size:12px;">— '+f.status_message+'</span>':''}</span>
             </div>
@@ -138,7 +138,7 @@ class SettingsPage {
       `;
       el.querySelectorAll('[data-accept]').forEach(b => b.addEventListener('click', async () => { await api.acceptFriend(b.dataset.accept); this.renderFriends(el); }));
       el.querySelectorAll('[data-reject]').forEach(b => b.addEventListener('click', async () => { await api.rejectFriend(b.dataset.reject); this.renderFriends(el); }));
-      el.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', async () => { if(confirm('Usunąć znajomego?')){ await api.removeFriend(b.dataset.remove); this.renderFriends(el); }}));
+      el.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', async () => { if(await showConfirm('Potwierdzenie', 'Usunąć znajomego?')){ await api.removeFriend(b.dataset.remove); this.renderFriends(el); }}));
       el.querySelectorAll('[data-chat]').forEach(b => b.addEventListener('click', () => {
         const panel = document.getElementById('chat-panel');
         if (panel) panel.remove();
@@ -177,7 +177,7 @@ class SettingsPage {
     document.getElementById('dev-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const body = { full_name: document.getElementById('dev-full_name').value, studio_name: document.getElementById('dev-studio_name').value, website: document.getElementById('dev-website').value, reason: document.getElementById('dev-reason').value, experience: document.getElementById('dev-experience').value };
-      try { await api.applyDeveloper(body); alert('Wniosek wysłany!'); this.renderDeveloper(el, await api.getSettings()); } catch(err) { alert(err.message); }
+      try { await api.applyDeveloper(body); showModal('Sukces', 'Wniosek wysłany!', 'success'); this.renderDeveloper(el, await api.getSettings()); } catch(err) { showModal('Błąd', err.message, 'error'); }
     });
   }
 
@@ -203,16 +203,16 @@ class SettingsPage {
         const res = await window.VexCenter.game.selectExecutable();
         if (res.canceled) return;
         exe = res.path;
-        await api.registerInstall(b.dataset.launch, '', exe);
+        await api.registerInstall(b.dataset.launch, null, exe);
       }
       const result = await window.VexCenter.game.launch(b.dataset.launch, exe);
-      if (!result.success) alert('Błąd uruchamiania: ' + result.error);
+      if (!result.success) showModal('Błąd', result.error, 'error');
     }));
     el.querySelectorAll('[data-set-exe]').forEach(b => b.addEventListener('click', async () => {
       const res = await window.VexCenter.game.selectExecutable();
       if (res.canceled) return;
-      await api.registerInstall(b.dataset.setExe, '', res.path);
-      alert('Ścieżka zaktualizowana!');
+      await api.registerInstall(b.dataset.setExe, null, res.path);
+      showModal('Sukces', 'Ścieżka zaktualizowana!', 'success');
       this.renderGames(el, await api.getSettings());
     }));
   }
