@@ -11,10 +11,10 @@ class Database {
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                     PDO::ATTR_EMULATE_PREPARES => false,
                 ];
-                // TiDB wymaga TLS — wymuś SSL przez MYSQL_ATTR_SSL_KEY (pusty)
-                $opts[PDO::MYSQL_ATTR_SSL_KEY] = null;
-                $opts[PDO::MYSQL_ATTR_SSL_CERT] = null;
+                // TiDB wymaga TLS
+                $oldLevel = error_reporting(E_ALL & ~E_DEPRECATED);
                 $opts[PDO::MYSQL_ATTR_SSL_CA] = __DIR__ . '/cacert.pem';
+                error_reporting($oldLevel);
                 self::$instance = new PDO($dsn, DB_USER, DB_PASS, $opts);
             } catch (PDOException $e) {
                 $msg = $e->getMessage();
