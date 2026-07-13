@@ -1,6 +1,6 @@
 class VexAPI {
   constructor() {
-    this.baseURL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://vexcenter.xo.je/api';
+    this.baseURL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'https://vexcenter1.vercel.app/api';
     this.token = localStorage.getItem('vex_token') || null;
     this.user = null;
   }
