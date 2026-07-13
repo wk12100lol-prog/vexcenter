@@ -110,6 +110,15 @@ async function downloadWithHostHandler(url, destDir) {
     targetUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=download&confirm=t`;
   } else if (host.includes('dropbox.com')) {
     targetUrl = url + (url.includes('?') ? '&' : '?') + 'dl=1';
+  } else if (['bzzhr.to', 'buzzheavier.com', 'bzzhr.co', 'fuckingfast.net', 'fuckingfast.co'].some(d => host.includes(d))) {
+    targetUrl = url.replace(/\/?$/, '/download');
+    let dl = await directDownload(targetUrl, destDir);
+    if (!dl.success) {
+      const html = await fetchPage(url);
+      const m = html.match(/href="([^"]+)"[^>]*download/i) || html.match(/"(https:\/\/[^"]+\/(file|d)\/[^"]+)"/);
+      if (m) { targetUrl = m[1]; dl = await directDownload(targetUrl, destDir); }
+    }
+    return dl;
   } else if (host.includes('1fichier.com')) {
     const html = await fetchPage(url);
     const m = html.match(/href="(https:\/\/[^"]+1fichier[^"]+)"[^>]*>Download/);
