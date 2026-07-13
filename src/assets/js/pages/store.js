@@ -172,8 +172,12 @@ class StorePage {
             <input type="number" id="up-price" placeholder="0.00" step="0.01" min="0" value="0" />
           </div>
           <div class="form-group">
-            <label>Plik gry (.exe, .zip)</label>
-            <input type="file" id="up-file" accept=".exe,.zip,.rar,.7z,.msi" required />
+            <label>Link do pobrania</label>
+            <input type="url" id="up-download" placeholder="https://bzzhr.to/xyz123 lub direct link do pliku" required />
+            <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px;line-height:1.5;">
+              Obsługiwane hostingi: <strong>bzzhr.to</strong>, <strong>MediaFire</strong>, <strong>Google Drive</strong>, <strong>Dropbox</strong>, <strong>1fichier</strong> oraz direct linki do plików (.zip, .exe, .rar).
+              Mega nie jest obsługiwany.
+            </div>
           </div>
           <div class="form-group">
             <label>Miniaturka (opcjonalnie)</label>
@@ -205,7 +209,7 @@ class StorePage {
         fd.append('description', document.getElementById('up-desc').value);
         fd.append('genre', document.getElementById('up-genre').value);
         fd.append('price', document.getElementById('up-price').value);
-        fd.append('game_file', document.getElementById('up-file').files[0]);
+        fd.append('download_link', document.getElementById('up-download').value);
         const img = document.getElementById('up-image').files[0];
         if (img) fd.append('image', img);
 
