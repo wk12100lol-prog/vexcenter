@@ -45,8 +45,12 @@ class VexAPI {
   async request(method, endpoint, data = null) {
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        const opts = { method: method.toUpperCase(), headers: this.getHeaders() };
-        if (data && method !== 'get') opts.body = JSON.stringify(data);
+        const isFormData = data instanceof FormData;
+        const hdrs = {};
+        if (this.token) hdrs['Authorization'] = `Bearer ${this.token}`;
+        if (!isFormData) hdrs['Content-Type'] = 'application/json';
+        const opts = { method: method.toUpperCase(), headers: hdrs };
+        if (data && method !== 'get') opts.body = isFormData ? data : JSON.stringify(data);
 
         const res = await fetch(`${this.baseURL}/${endpoint}`, opts);
 

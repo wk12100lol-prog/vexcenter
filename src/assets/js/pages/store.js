@@ -53,6 +53,8 @@ class StorePage {
       document.getElementById('store-featured-grid')?.scrollIntoView({ behavior: 'smooth' });
     });
 
+    document.getElementById('hero-upload')?.addEventListener('click', () => this.handleUpload());
+
     this.loadFeatured();
     this.loadNewReleases();
     this.loadTopRated();
@@ -120,6 +122,107 @@ class StorePage {
         </div>`;
       }).join('');
     } catch { bar.style.display = 'none'; }
+  }
+
+  handleUpload() {
+    if (!api.isAuthenticated) {
+      alert('Zaloguj się, aby dodać grę.');
+      return;
+    }
+    if (!api.isDeveloper) {
+      if (confirm('Musisz zostać zweryfikowanym deweloperem. Przejść do ustawień?')) {
+        router.navigate('settings');
+        setTimeout(() => {
+          const devTab = document.querySelector('[data-tab="developer"]');
+          if (devTab) devTab.click();
+        }, 100);
+      }
+      return;
+    }
+    this.showUploadModal();
+  }
+
+  showUploadModal() {
+    const existing = document.getElementById('upload-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'upload-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s ease;';
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    modal.innerHTML = `
+      <div style="background:#1a1a2e;border-radius:16px;padding:32px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;">
+        <h2 style="margin-bottom:24px;">Dodaj grę</h2>
+        <form id="upload-form">
+          <div class="form-group">
+            <label>Tytuł</label>
+            <input type="text" id="up-title" placeholder="Nazwa gry" required />
+          </div>
+          <div class="form-group">
+            <label>Opis</label>
+            <textarea id="up-desc" rows="3" placeholder="Opis gry" required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Gatunek</label>
+            <input type="text" id="up-genre" placeholder="np. Akcja, RPG, Strategia" />
+          </div>
+          <div class="form-group">
+            <label>Cena (PLN)</label>
+            <input type="number" id="up-price" placeholder="0.00" step="0.01" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Plik gry (.exe, .zip)</label>
+            <input type="file" id="up-file" accept=".exe,.zip,.rar,.7z,.msi" required />
+          </div>
+          <div class="form-group">
+            <label>Miniaturka (opcjonalnie)</label>
+            <input type="file" id="up-image" accept="image/*" />
+          </div>
+          <div style="display:flex;gap:12px;margin-top:20px;">
+            <button type="submit" class="btn btn-primary btn-block" id="up-submit">Wyślij</button>
+            <button type="button" class="btn btn-ghost" id="up-cancel" style="flex:0">Anuluj</button>
+          </div>
+          <div id="up-error" style="margin-top:12px;display:none;color:#ef4444;font-size:13px;"></div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    document.getElementById('up-cancel').addEventListener('click', () => modal.remove());
+
+    document.getElementById('upload-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('up-submit');
+      const err = document.getElementById('up-error');
+      btn.disabled = true;
+      btn.textContent = 'Przesyłanie...';
+      err.style.display = 'none';
+
+      try {
+        const fd = new FormData();
+        fd.append('title', document.getElementById('up-title').value);
+        fd.append('description', document.getElementById('up-desc').value);
+        fd.append('genre', document.getElementById('up-genre').value);
+        fd.append('price', document.getElementById('up-price').value);
+        fd.append('game_file', document.getElementById('up-file').files[0]);
+        const img = document.getElementById('up-image').files[0];
+        if (img) fd.append('image', img);
+
+        const result = await api.uploadGame(fd);
+        alert('Gra została przesłana!');
+        modal.remove();
+        this.loadFeatured();
+        this.loadNewReleases();
+        this.loadTopRated();
+      } catch (e) {
+        err.textContent = e.message;
+        err.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Wyślij';
+      }
+    });
   }
 }
 
