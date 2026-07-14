@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
 const https = require('https');
 
 let mainWindow;
@@ -90,8 +90,15 @@ ipcMain.handle('install:extract', async (_, zipPath, targetDir) => {
   try {
     if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
     return new Promise((resolve) => {
-      exec(`powershell -Command "Expand-Archive -LiteralPath '${zipPath}' -DestinationPath '${targetDir}' -Force"`, { timeout: 120000 }, (err) => {
-        if (err) return resolve({ success: false, error: err.message });
+      const ps = `Expand-Archive -LiteralPath '${zipPath.replace(/'/g, "''")}' -DestinationPath '${targetDir.replace(/'/g, "''")}' -Force`;
+      const child = spawn('powershell.exe', ['-NoProfile', '-Command', ps], { timeout: 180000, windowsHide: true });
+      let stderr = '';
+      child.stderr.on('data', d => stderr += d);
+      child.on('close', (code) => {
+        if (code !== 0) return resolve({ success: false, error: `PowerShell exit code ${code}: ${stderr || 'unknown error'}` });
+        // verify the exe was actually extracted
+        const exe = path.join(targetDir, 'VexCenter.exe');
+        if (!fs.existsSync(exe)) return resolve({ success: false, error: 'VexCenter.exe not found after extraction' });
         resolve({ success: true, path: targetDir });
       });
     });
@@ -101,18 +108,10 @@ ipcMain.handle('install:extract', async (_, zipPath, targetDir) => {
 ipcMain.handle('install:create-shortcut', async (_, targetPath) => {
   try {
     const desktop = path.join(app.getPath('desktop'), 'VexCenter.lnk');
-    const ps = `
-      $ws = New-Object -ComObject WScript.Shell;
-      $s = $ws.CreateShortcut('${desktop.replace(/'/g, "''")}');
-      $s.TargetPath = '${targetPath.replace(/'/g, "''")}';
-      $s.Description = 'VexCenter - Platforma dystrybucji gier';
-      $s.IconLocation = '${targetPath.replace(/'/g, "''")},0';
-      $s.Save();
-    `;
+    const ps = `$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('${desktop.replace(/'/g, "''")}'); $s.TargetPath = '${targetPath.replace(/'/g, "''")}'; $s.Description = 'VexCenter - Platforma dystrybucji gier'; $s.IconLocation = '${targetPath.replace(/'/g, "''")},0'; $s.Save();`;
     await new Promise((resolve, reject) => {
-      exec(`powershell -Command "${ps.replace(/"/g, '\\"')}"`, (err) => {
-        if (err) reject(err); else resolve();
-      });
+      const child = spawn('powershell.exe', ['-NoProfile', '-Command', ps], { windowsHide: true });
+      child.on('close', (code) => { if (code === 0) resolve(); else reject(new Error(`Exit code ${code}`)); });
     });
     return { success: true };
   } catch (e) { return { success: false, error: e.message }; }

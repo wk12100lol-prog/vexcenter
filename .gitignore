@@ -12,3 +12,8 @@ Thumbs.db
 
 .vercel
 .env*
+
+installer/VexInstaller/bin/
+installer/VexInstaller/obj/
+installer/VexInstaller/out/
+installer/install.cmd

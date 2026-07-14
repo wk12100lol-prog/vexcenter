@@ -1,163 +1,62 @@
+const { createCanvas } = require('canvas');
 const fs = require('fs');
 const path = require('path');
-const zlib = require('zlib');
 
-const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+const size = 256;
+const canvas = createCanvas(size, size);
+const ctx = canvas.getContext('2d');
 
-function crc32(buf) {
-  let c = 0xffffffff;
-  for (let n = 0; n < buf.length; n++) {
-    c = (c >>> 8) ^ tbl[(c ^ buf[n]) & 0xff];
-  }
-  return (c ^ 0xffffffff) >>> 0;
+// Background rounded rect
+const r = 48;
+ctx.beginPath();
+ctx.moveTo(r, 0);
+ctx.lineTo(size - r, 0);
+ctx.quadraticCurveTo(size, 0, size, r);
+ctx.lineTo(size, size - r);
+ctx.quadraticCurveTo(size, size, size - r, size);
+ctx.lineTo(r, size);
+ctx.quadraticCurveTo(0, size, 0, size - r);
+ctx.lineTo(0, r);
+ctx.quadraticCurveTo(0, 0, r, 0);
+ctx.closePath();
+
+const grad = ctx.createLinearGradient(0, 0, size, size);
+grad.addColorStop(0, '#7c3aed');
+grad.addColorStop(0.5, '#a855f7');
+grad.addColorStop(1, '#ec4899');
+ctx.fillStyle = grad;
+ctx.fill();
+
+// Inner cutout hexagon (dark)
+const cx = size / 2;
+const cy = size / 2;
+const outerR = 72;
+const innerR = 72 * 0.58;
+
+ctx.beginPath();
+for (let i = 0; i < 6; i++) {
+  const angle = (Math.PI / 3) * i - Math.PI / 6;
+  const x = cx + outerR * Math.cos(angle);
+  const y = cy + outerR * Math.sin(angle);
+  if (i === 0) ctx.moveTo(x, y);
+  else ctx.lineTo(x, y);
 }
+ctx.closePath();
+ctx.fillStyle = '#0c0c18';
+ctx.fill();
 
-const tbl = new Uint32Array(256);
-for (let i = 0; i < 256; i++) {
-  let c = i;
-  for (let j = 0; j < 8; j++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
-  tbl[i] = c;
-}
+// Play triangle
+ctx.beginPath();
+const triSize = 34;
+const triCx = cx;
+const triCy = cy;
+ctx.moveTo(triCx - triSize * 0.4, triCy - triSize * 0.55);
+ctx.lineTo(triCx + triSize * 0.5, triCy);
+ctx.lineTo(triCx - triSize * 0.4, triCy + triSize * 0.55);
+ctx.closePath();
+ctx.fillStyle = '#ffffff';
+ctx.fill();
 
-function chunk(type, data) {
-  const len = Buffer.alloc(4);
-  len.writeUInt32BE(data.length);
-  const t = Buffer.from(type, 'ascii');
-  const crcData = Buffer.concat([t, data]);
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(crcData));
-  return Buffer.concat([len, t, data, crc]);
-}
-
-function drawHexagon(img, w, cx, cy, r, color) {
-  const coords = [];
-  for (let i = 0; i < 6; i++) {
-    const angle = Math.PI / 180 * (60 * i - 30);
-    coords.push({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
-  }
-  // fill with scanline algorithm
-  for (let y = 0; y < w; y++) {
-    const xs = [];
-    for (let i = 0; i < 6; i++) {
-      const p1 = coords[i], p2 = coords[(i + 1) % 6];
-      if ((p1.y < y && p2.y >= y) || (p2.y < y && p1.y >= y)) {
-        const t = (y - p1.y) / (p2.y - p1.y);
-        xs.push(p1.x + t * (p2.x - p1.x));
-      }
-    }
-    if (xs.length >= 2) {
-      xs.sort((a, b) => a - b);
-      for (let x = Math.round(xs[0]); x <= Math.round(xs[xs.length - 1]); x++) {
-        if (x >= 0 && x < w) {
-          const idx = (y * w + x) * 4;
-          img[idx] = color[0]; img[idx+1] = color[1]; img[idx+2] = color[2]; img[idx+3] = color[3];
-        }
-      }
-    }
-  }
-}
-
-function createIcon(size, glow = false) {
-  const w = size, h = size;
-  const raw = Buffer.alloc(w * h * 4);
-  for (let i = 0; i < raw.length; i++) raw[i] = 0;
-  raw.fill(0);
-
-  const cx = w / 2, cy = h / 2, r = w * 0.36;
-
-  // glow
-  if (glow) {
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
-        if (dist < r + 12) {
-          const a = Math.max(0, 1 - (dist - r + 4) / 16);
-          const idx = (y * w + x) * 4;
-          raw[idx] = 124; raw[idx+1] = 58; raw[idx+2] = 237;
-          raw[idx+3] = Math.round(a * 60);
-        }
-      }
-    }
-  }
-
-  // hexagon background (darker)
-  drawHexagon(raw, w, cx, cy, r, [99, 46, 190, 255]);
-
-  // hexagon inner (gradient simulated)
-  drawHexagon(raw, w, cx, cy, r * 0.88, [124, 58, 237, 255]);
-
-  // triangle play button
-  const tr = r * 0.32;
-  const pts = [
-    { x: cx - tr * 0.5, y: cy - tr * 0.866 },
-    { x: cx - tr * 0.5, y: cy + tr * 0.866 },
-    { x: cx + tr, y: cy },
-  ];
-  for (let y = 0; y < h; y++) {
-    const xs = [];
-    for (let i = 0; i < 3; i++) {
-      const p1 = pts[i], p2 = pts[(i + 1) % 3];
-      if ((p1.y < y && p2.y >= y) || (p2.y < y && p1.y >= y)) {
-        const t = (y - p1.y) / (p2.y - p1.y);
-        xs.push(p1.x + t * (p2.x - p1.x));
-      }
-    }
-    if (xs.length >= 2) {
-      xs.sort((a, b) => a - b);
-      for (let x = Math.round(xs[0]); x <= Math.round(xs[xs.length - 1]); x++) {
-        if (x >= 0 && x < w) {
-          const idx = (y * w + x) * 4;
-          raw[idx] = 236; raw[idx+1] = 72; raw[idx+2] = 153; raw[idx+3] = 255;
-        }
-      }
-    }
-  }
-
-  return raw;
-}
-
-function writePNG(filePath, raw, w, h) {
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(w, 0);
-  ihdr.writeUInt32BE(h, 4);
-  ihdr[8] = 8; ihdr[9] = 6; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
-
-  const rawSize = (w * 4 + 1) * h;
-  const rawData = Buffer.alloc(rawSize);
-  let off = 0;
-  for (let y = 0; y < h; y++) {
-    rawData[off++] = 0;
-    for (let x = 0; x < w; x++) {
-      const idx = (y * w + x) * 4;
-      rawData[off++] = raw[idx];
-      rawData[off++] = raw[idx+1];
-      rawData[off++] = raw[idx+2];
-      rawData[off++] = raw[idx+3];
-    }
-  }
-
-  const compressed = zlib.deflateSync(rawData);
-  const png = Buffer.concat([
-    sig,
-    chunk('IHDR', ihdr),
-    chunk('IDAT', compressed),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
-
-  fs.writeFileSync(filePath, png);
-  console.log('Created:', path.basename(filePath), w + 'x' + h);
-}
-
-// Create icons
-const base = path.join(__dirname, '..', 'src', 'assets', 'images');
-const installerAssets = path.join(__dirname, 'assets');
-
-// App icon 256x256 with glow
-const appRaw = createIcon(256, true);
-writePNG(path.join(base, 'icon.png'), appRaw, 256, 256);
-
-// Installer icon 256x256 without glow (smaller file)
-const instRaw = createIcon(256, false);
-writePNG(path.join(installerAssets, 'icon.png'), instRaw, 256, 256);
-
-console.log('Done');
+const outDir = path.join(__dirname, '..', 'src', 'assets', 'images');
+fs.writeFileSync(path.join(outDir, 'icon.png'), canvas.toBuffer('image/png'));
+console.log('icon.png saved');

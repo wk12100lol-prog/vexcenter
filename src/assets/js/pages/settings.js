@@ -13,9 +13,9 @@ class SettingsPage {
         <div class="page-header"><h1>Ustawienia</h1></div>
         <div style="display:flex;gap:24px;">
           <div class="settings-tabs" style="width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:4px;">
-            ${['profile','friends','developer','games','notifications'].map((t,i) => `
+            ${['profile','friends','developer','games','notifications','updates'].map((t,i) => `
               <button class="btn settings-tab ${i===0?'btn-primary':'btn-ghost'}" data-tab="${t}" style="text-align:left;justify-content:flex-start;padding:10px 14px;border-radius:8px;">
-                ${t === 'profile' ? '👤 Profil' : t === 'friends' ? '👥 Znajomi' : t === 'developer' ? '🛠 Deweloper' : t === 'games' ? '🎮 Gry' : '🔔 Powiadomienia'}
+                ${t === 'profile' ? '👤 Profil' : t === 'friends' ? '👥 Znajomi' : t === 'developer' ? '🛠 Deweloper' : t === 'games' ? '🎮 Gry' : t === 'notifications' ? '🔔 Powiadomienia' : '🔄 Aktualizacje'}
               </button>
             `).join('')}
           </div>
@@ -42,6 +42,7 @@ class SettingsPage {
       else if (this.tab === 'developer') this.renderDeveloper(el, data);
       else if (this.tab === 'games') this.renderGames(el, data);
       else if (this.tab === 'notifications') this.renderNotifications(el);
+      else if (this.tab === 'updates') this.renderUpdates(el);
     } catch { el.innerHTML = '<div class="empty-state"><p>Błąd ładowania ustawień</p></div>'; }
   }
 
@@ -240,6 +241,93 @@ class SettingsPage {
         this.renderNotifications(el);
       });
     } catch { el.innerHTML = '<div class="empty-state"><p>Błąd ładowania powiadomień</p></div>'; }
+  }
+
+  async renderUpdates(el) {
+    el.innerHTML = `
+      <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:24px;">
+        <h3 style="margin-bottom:4px;">Aktualizacje</h3>
+        <p style="color:rgba(255,255,255,0.3);font-size:13px;margin-bottom:20px;">Sprawdź czy dostępna jest nowsza wersja VexCenter.</p>
+        <div style="background:rgba(124,58,237,0.08);border-radius:8px;border:1px solid rgba(124,58,237,0.15);padding:16px;margin-bottom:20px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(124,58,237,0.15);display:flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            </div>
+            <div>
+              <div style="font-size:14px;font-weight:600;">Wersja 1.0.0</div>
+              <div id="update-status" style="font-size:12px;color:rgba(255,255,255,0.3);">Kliknij "Sprawdź" aby wyszukać aktualizacje</div>
+            </div>
+          </div>
+        </div>
+        <div id="update-progress-wrap" style="display:none;margin-bottom:16px;">
+          <div style="height:6px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden;">
+            <div id="update-progress-fill" style="height:100%;width:0%;border-radius:3px;background:linear-gradient(90deg,#7c3aed,#a855f7);transition:width 0.3s;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px;">
+            <span id="update-progress-label">Pobieranie...</span>
+            <span id="update-progress-pct">0%</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" id="btn-check-updates">🔍 Sprawdź aktualizacje</button>
+          <button class="btn btn-secondary" id="btn-download-update" style="display:none;">⬇ Pobierz aktualizację</button>
+          <button class="btn btn-success" id="btn-install-update" style="display:none;background:var(--green-500);">🔄 Zainstaluj teraz</button>
+        </div>
+      </div>
+    `;
+
+    if (!window.VexCenter?.update) {
+      document.getElementById('btn-check-updates').disabled = true;
+      document.getElementById('update-status').textContent = 'Funkcja dostępna tylko w aplikacji desktopowej.';
+      return;
+    }
+
+    const statusEl = document.getElementById('update-status');
+    const progressWrap = document.getElementById('update-progress-wrap');
+    const progressFill = document.getElementById('update-progress-fill');
+    const progressPct = document.getElementById('update-progress-pct');
+    const btnCheck = document.getElementById('btn-check-updates');
+    const btnDownload = document.getElementById('btn-download-update');
+    const btnInstall = document.getElementById('btn-install-update');
+
+    window.VexCenter.update.onStatus((msg) => { statusEl.textContent = msg; });
+    window.VexCenter.update.onAvailable((info) => {
+      statusEl.textContent = `Dostępna wersja ${info.version}!`;
+      btnDownload.style.display = 'inline-flex';
+    });
+    window.VexCenter.update.onProgress((pct) => {
+      progressWrap.style.display = 'block';
+      progressFill.style.width = pct + '%';
+      progressPct.textContent = Math.round(pct) + '%';
+    });
+    window.VexCenter.update.onDownloaded(() => {
+      progressWrap.style.display = 'none';
+      statusEl.textContent = 'Pobrano! Kliknij "Zainstaluj teraz"';
+      btnDownload.style.display = 'none';
+      btnInstall.style.display = 'inline-flex';
+    });
+
+    btnCheck.addEventListener('click', async () => {
+      btnCheck.disabled = true;
+      btnCheck.textContent = '⏳ Sprawdzanie...';
+      statusEl.textContent = 'Sprawdzanie...';
+      await window.VexCenter.update.check();
+      btnCheck.disabled = false;
+      btnCheck.textContent = '🔍 Sprawdź aktualizacje';
+    });
+
+    btnDownload.addEventListener('click', async () => {
+      btnDownload.disabled = true;
+      btnDownload.textContent = '⏳ Pobieranie...';
+      progressWrap.style.display = 'block';
+      await window.VexCenter.update.download();
+      btnDownload.disabled = false;
+      btnDownload.textContent = '⬇ Pobierz aktualizację';
+    });
+
+    btnInstall.addEventListener('click', () => {
+      window.VexCenter.update.install();
+    });
   }
 }
 
