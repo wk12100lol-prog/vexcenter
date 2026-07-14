@@ -77,6 +77,7 @@ function initAutoUpdater() {
 
   autoUpdater.on('error', (err) => {
     console.error('[AutoUpdater]', err?.message || err);
+    mainWindow?.webContents.send('update:error', err?.message || err);
   });
 
   setTimeout(() => {

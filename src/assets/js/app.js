@@ -90,7 +90,7 @@
           <a id="splash-toggle" style="color:var(--purple-400);cursor:pointer;font-weight:600;">Zarejestruj się</a>
         </p>
         <div id="splash-error" style="margin-top:12px;padding:10px;border-radius:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);display:none;font-size:13px;color:var(--red-400);"></div>
-        <p style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.12);">v1.0.1 — Gaming Platform</p>
+        <p style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.12);">v1.0.2 — Gaming Platform</p>
         <a id="splash-diag" style="font-size:10px;color:rgba(255,255,255,0.08);cursor:pointer;display:block;margin-top:4px;">diagnostyka</a>
       </div>
     `;
