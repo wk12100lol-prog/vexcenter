@@ -58,7 +58,6 @@ try {
         case 'announcements': require __DIR__ . '/announcements.php'; break;
         case 'ping':        require __DIR__ . '/ping.php'; break;
         case 'image':       require __DIR__ . '/image.php'; break;
-        case 'reset-users': require __DIR__ . '/reset_users.php'; break;
         default:            Response::error(404, 'Endpoint not found');
     }
 } catch (Exception $e) {
