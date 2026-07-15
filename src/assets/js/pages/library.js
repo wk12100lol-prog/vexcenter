@@ -131,10 +131,13 @@ class LibraryPage {
       if (btn) {
         btn.addEventListener('click', (e) => { e.stopPropagation(); this.launchGame(btn.dataset.exe, btn.dataset.name); });
       }
-      card.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-play') || e.target.closest('.btn-remove-custom')) return;
-        router.navigate('game', {id: parseInt(card.dataset.gameId)});
-      });
+      const gameId = card.dataset.gameId;
+      if (gameId) {
+        card.addEventListener('click', (e) => {
+          if (e.target.closest('.btn-play') || e.target.closest('.btn-remove-custom')) return;
+          router.navigate('game', {id: parseInt(gameId)});
+        });
+      }
     });
 
     content.querySelectorAll('.btn-remove-custom').forEach(btn => {

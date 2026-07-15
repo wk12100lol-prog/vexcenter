@@ -202,8 +202,10 @@
   }
 
   let _updatePrompted = false;
+  let _updateListenersInit = false;
   function initAutoUpdateListeners() {
-    if (!window.VexCenter?.update) return;
+    if (!window.VexCenter?.update || _updateListenersInit) return;
+    _updateListenersInit = true;
     const appVersion = '1.4.1';
     window.VexCenter.update.onAvailable(async (info) => {
       if (_updatePrompted) return;
