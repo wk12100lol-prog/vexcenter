@@ -67,6 +67,13 @@ function logout() {
 }
 
 // Global download manager - persists across page navigation
+function addRecentPlay(gameId, title, thumbnail) {
+  const recent = JSON.parse(localStorage.getItem('vex_recent') || '[]');
+  const filtered = recent.filter(r => r.id !== gameId);
+  filtered.unshift({ id: gameId, title, thumbnail, timestamp: Date.now() });
+  localStorage.setItem('vex_recent', JSON.stringify(filtered.slice(0, 10)));
+}
+
 const downloadManager = {
   active: false,
   gameId: null,

@@ -826,6 +826,45 @@ vc-game-card {
   margin-left: 2px;
 }
 
+.game-card .thumbnail .play-overlay-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.85);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: rgba(124,58,237,0.9);
+  border: none;
+  border-radius: 20px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  opacity: 0;
+  transition: all var(--t-normal);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 30px rgba(124,58,237,0.3);
+}
+
+.game-card:hover .thumbnail .play-overlay-btn {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.game-card .thumbnail .play-overlay-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: #fff;
+}
+
+.game-card .thumbnail .play-overlay-btn:hover {
+  background: rgba(124,58,237,1);
+  box-shadow: 0 0 40px rgba(124,58,237,0.5);
+}
+
 .game-card .info {
   padding: 12px 14px 14px;
 }

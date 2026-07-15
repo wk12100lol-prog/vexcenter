@@ -55,6 +55,7 @@ try {
         case 'developer':   require __DIR__ . '/developer/router.php'; break;
         case 'notifications': require __DIR__ . '/notifications/router.php'; break;
         case 'announcements': require __DIR__ . '/announcements.php'; break;
+        case 'review-comments': require __DIR__ . '/reviews/router.php'; break;
         case 'ping':        require __DIR__ . '/ping.php'; break;
         case 'image':       require __DIR__ . '/image.php'; break;
         default:            Response::error(404, 'Endpoint not found');

@@ -75,6 +75,25 @@ class SettingsPage {
         </form>
       </div>
       <div style="margin-top:16px;background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:24px;">
+        <h3 style="margin-bottom:16px;">Wygląd i język</h3>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:160px;">
+            <label style="font-size:13px;color:rgba(255,255,255,0.5);display:block;margin-bottom:6px;">Motyw</label>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-sm ${document.documentElement.classList.contains('theme-light')?'btn-primary':'btn-secondary'}" id="theme-dark-btn">Ciemny</button>
+              <button class="btn btn-sm ${document.documentElement.classList.contains('theme-light')?'btn-secondary':'btn-primary'}" id="theme-light-btn">Jasny</button>
+            </div>
+          </div>
+          <div style="flex:1;min-width:160px;">
+            <label style="font-size:13px;color:rgba(255,255,255,0.5);display:block;margin-bottom:6px;">Język</label>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-sm ${(localStorage.getItem('vex_lang')||'pl')==='pl'?'btn-primary':'btn-secondary'}" id="lang-pl-btn">PL</button>
+              <button class="btn btn-sm ${(localStorage.getItem('vex_lang')||'pl')==='en'?'btn-primary':'btn-secondary'}" id="lang-en-btn">EN</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:16px;background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:24px;">
         <h3 style="margin-bottom:12px;">Statystyki</h3>
         <div class="profile-stats">${['gameCount','reviewCount','friendCount','installedCount'].map(s => `<div class="stat"><div class="value">${data.stats[s]||0}</div><div class="label">${s==='gameCount'?'Gry':s==='reviewCount'?'Opinie':s==='friendCount'?'Znajomi':'Zainstalowane'}</div></div>`).join('')}</div>
       </div>
@@ -90,6 +109,33 @@ class SettingsPage {
     document.getElementById('s-avatar-btn')?.addEventListener('click', () => {
       document.getElementById('s-avatar-input').click();
     });
+    document.getElementById('theme-dark-btn')?.addEventListener('click', () => {
+      document.documentElement.classList.remove('theme-light');
+      localStorage.setItem('vex_theme', 'dark');
+      const lightBtn = document.getElementById('theme-light-btn');
+      const darkBtn = document.getElementById('theme-dark-btn');
+      if (lightBtn) { lightBtn.className = 'btn btn-sm btn-secondary'; }
+      if (darkBtn) { darkBtn.className = 'btn btn-sm btn-primary'; }
+    });
+    document.getElementById('theme-light-btn')?.addEventListener('click', () => {
+      document.documentElement.classList.add('theme-light');
+      localStorage.setItem('vex_theme', 'light');
+      const lightBtn = document.getElementById('theme-light-btn');
+      const darkBtn = document.getElementById('theme-dark-btn');
+      if (lightBtn) { lightBtn.className = 'btn btn-sm btn-primary'; }
+      if (darkBtn) { darkBtn.className = 'btn btn-sm btn-secondary'; }
+    });
+    document.getElementById('lang-pl-btn')?.addEventListener('click', () => {
+      if (typeof setLang === 'function') { setLang('pl'); }
+      document.getElementById('lang-pl-btn').className = 'btn btn-sm btn-primary';
+      document.getElementById('lang-en-btn').className = 'btn btn-sm btn-secondary';
+    });
+    document.getElementById('lang-en-btn')?.addEventListener('click', () => {
+      if (typeof setLang === 'function') { setLang('en'); }
+      document.getElementById('lang-en-btn').className = 'btn btn-sm btn-primary';
+      document.getElementById('lang-pl-btn').className = 'btn btn-sm btn-secondary';
+    });
+
     document.getElementById('s-avatar-input')?.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -245,7 +291,7 @@ class SettingsPage {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
             </div>
             <div>
-              <div style="font-size:14px;font-weight:600;">Wersja 1.1.0</div>
+              <div style="font-size:14px;font-weight:600;">Wersja 1.2.0</div>
               <div id="update-status" style="font-size:12px;color:rgba(255,255,255,0.3);">Kliknij "Sprawdź" aby wyszukać aktualizacje</div>
             </div>
           </div>

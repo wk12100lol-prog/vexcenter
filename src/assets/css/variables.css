@@ -56,3 +56,225 @@
   --t-normal: 350ms cubic-bezier(0.4, 0, 0.2, 1);
   --t-spring: 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+.theme-light {
+  --black: #f5f5f7;
+  --black-soft: #e8e8ed;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-bg-hover: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-border-hover: rgba(0, 0, 0, 0.12);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+
+  --gradient-hero: linear-gradient(160deg, #f0f0ff 0%, #f5f5f7 40%, #fafafa 100%);
+}
+
+.theme-light body,
+.theme-light {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.theme-light .page-header h1 {
+  background: linear-gradient(135deg, rgba(0,0,0,0.85), rgba(124,58,237,0.7));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.theme-light .header-search input {
+  color: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.theme-light .header-search input::placeholder {
+  color: rgba(0, 0, 0, 0.25);
+}
+
+.theme-light .header-user .username {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.theme-light .sidebar-item {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.theme-light .sidebar-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.75);
+}
+
+.theme-light .sidebar-item.active {
+  background: rgba(124,58,237,0.1);
+  color: var(--purple-600);
+}
+
+.theme-light .section-header h2 {
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.theme-light .game-card .info h3 {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.theme-light .form-group input,
+.theme-light .form-group textarea {
+  color: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.theme-light .btn-ghost {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.theme-light .btn-secondary {
+  color: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.theme-light .profile-header-card .profile-info h2 {
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.theme-light .profile-stats .stat .value {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.theme-light .hero-banner .hero-content {
+  background: rgba(255,255,255,0.7);
+}
+
+.theme-light .hero-banner .hero-text h2 {
+  background: linear-gradient(135deg, #000 30%, #7c3aed 70%, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.theme-light .hero-banner .hero-text p {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.theme-light .search-result-item {
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.theme-light #search-results {
+  background: #fff;
+}
+
+.theme-light #search-filter-bar button {
+  border-color: rgba(0,0,0,0.1);
+}
+
+.theme-light #titlebar {
+  background: rgba(255,255,255,0.8);
+  border-bottom-color: rgba(0,0,0,0.06);
+}
+
+.theme-light .header-user .avatar {
+  box-shadow: 0 0 20px rgba(124,58,237,0.15);
+}
+
+.theme-light .empty-state h3 {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.theme-light .page-header .subtitle {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.theme-light .profile-stats .stat .label {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.theme-light #splash-overlay {
+  background: #f5f5f7 !important;
+}
+
+.theme-light .splash-sub {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.theme-light .form-group label {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.theme-light .auth-box h2 {
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.theme-light .auth-box .auth-subtitle {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.theme-light .auth-links {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.theme-light .sidebar-section-title {
+  color: rgba(0, 0, 0, 0.25);
+}
+
+.theme-light #splash {
+  background: #f5f5f7 !important;
+}
+
+.theme-light .splash-title {
+  background: linear-gradient(135deg, #000 30%, #7c3aed 70%, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.theme-light .settings-tab {
+  color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.theme-light .settings-tab.btn-primary {
+  color: #fff !important;
+}
+
+.theme-light .header-search .search-icon {
+  color: rgba(0, 0, 0, 0.25);
+}
+
+.theme-light .header-actions .icon-btn {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.theme-light .header-actions .icon-btn .dot {
+  border-color: #f5f5f7;
+}
+
+.theme-light .alert,
+.theme-light .notification-item {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.theme-light .game-card .meta .price {
+  color: var(--purple-600);
+}
+
+.theme-light .game-card .meta .price.free {
+  color: var(--green-600, #059669);
+}
+
+.theme-light .game-card .tags .tag {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.theme-light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.theme-light .section-header .section-link {
+  color: var(--purple-500);
+}
+
+.theme-light .logo-mark .hex-inner {
+  background: #f5f5f7;
+}
+
+.theme-light #titlebar .title {
+  background: linear-gradient(135deg,#333 20%,#7c3aed 50%,#ec4899 80%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

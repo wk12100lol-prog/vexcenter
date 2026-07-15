@@ -214,6 +214,20 @@ CREATE TABLE IF NOT EXISTS announcements (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- =============================================
+-- KOMENTARZE POD OPINIAMI
+-- =============================================
+CREATE TABLE IF NOT EXISTS review_comments (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  review_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  content TEXT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_review_comments_review (review_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =============================================
 -- WIADOMOSCI (czat)
 -- =============================================
 CREATE TABLE IF NOT EXISTS messages (

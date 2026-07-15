@@ -115,6 +115,8 @@ class VexAPI {
   deleteGame(gameId) { return this.post(`admin/games/delete`, { game_id: gameId }); }
   deleteUser(userId) { return this.post(`admin/users/delete`, { user_id: userId }); }
   updateUserRole(userId, role) { return this.post(`admin/users/role`, { user_id: userId, role }); }
+  getReviewComments(reviewId) { return this.get('review-comments?review_id=' + reviewId); }
+  addReviewComment(reviewId, content) { return this.post('review-comments', { review_id: reviewId, content }); }
 }
 
 const api = new VexAPI();

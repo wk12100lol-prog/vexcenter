@@ -57,12 +57,22 @@ class GameDetailPage {
                 </form>
               ` : ''}
               ${d.reviews?.length ? d.reviews.map(r => `
-                <div style="padding:12px 0;border-bottom:1px solid var(--glass-border);">
+                <div class="review-item" data-review-id="${r.id}" style="padding:12px 0;border-bottom:1px solid var(--glass-border);">
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                    <strong style="font-size:13px;">${r.username}</strong>
+                    <strong style="font-size:13px;cursor:pointer;" class="review-username" data-user-id="${r.user_id}">${r.username}</strong>
                     <span style="font-size:13px;color:var(--yellow-400);">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span>
                   </div>
                   ${r.content ? '<p style="font-size:13px;color:rgba(255,255,255,0.5);">'+r.content+'</p>' : ''}
+                  <div class="review-comments" style="margin-top:8px;padding-left:16px;border-left:2px solid var(--glass-border);">
+                    <div class="comment-list" style="font-size:12px;"></div>
+                    ${api.isAuthenticated ? `
+                      <button class="btn btn-ghost btn-sm toggle-comments" style="font-size:11px;padding:2px 8px;margin-top:4px;">Komentuj</button>
+                      <div class="comment-form" style="display:none;margin-top:6px;display:flex;gap:6px;">
+                        <input type="text" class="comment-input" placeholder="Napisz komentarz..." style="flex:1;padding:4px 8px;border:1px solid var(--glass-border);border-radius:4px;background:rgba(255,255,255,0.04);color:#fff;font-size:12px;font-family:var(--font);outline:none;">
+                        <button class="btn btn-sm btn-primary submit-comment" style="padding:4px 10px;font-size:11px;">Wyślij</button>
+                      </div>
+                    ` : ''}
+                  </div>
                 </div>
               `).join('') : '<p style="color:rgba(255,255,255,0.2);text-align:center;padding:20px;">Brak opinii. Bądź pierwszy!</p>'}
             </div>
@@ -85,11 +95,61 @@ class GameDetailPage {
         this.render(container, gameId);
       });
 
+      async function loadComments(reviewId, commentListEl) {
+        try {
+          const data = await api.getReviewComments(reviewId);
+          const comments = data.comments || [];
+          if (comments.length === 0) { commentListEl.innerHTML = ''; return; }
+          commentListEl.innerHTML = comments.map(c => `
+            <div style="padding:4px 0;display:flex;gap:6px;align-items:flex-start;">
+              <span style="font-weight:600;font-size:11px;cursor:pointer;" class="comment-username" data-user-id="${c.user_id}">${c.username}:</span>
+              <span style="color:rgba(255,255,255,0.5);font-size:11px;">${c.content}</span>
+            </div>
+          `).join('');
+        } catch { commentListEl.innerHTML = '<span style="color:#ef4444;font-size:11px;">Błąd</span>'; }
+      }
+      document.querySelectorAll('.toggle-comments').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const form = this.parentElement.querySelector('.comment-form');
+          const reviewItem = this.closest('.review-item');
+          const reviewId = reviewItem.dataset.reviewId;
+          const commentList = reviewItem.querySelector('.comment-list');
+          if (form.style.display === 'none' || !form.style.display || form.style.display === '') {
+            form.style.display = 'flex';
+            loadComments(reviewId, commentList);
+          } else {
+            form.style.display = 'none';
+          }
+        });
+      });
+      document.querySelectorAll('.submit-comment').forEach(btn => {
+        btn.addEventListener('click', async function() {
+          const reviewItem = this.closest('.review-item');
+          const reviewId = reviewItem.dataset.reviewId;
+          const input = reviewItem.querySelector('.comment-input');
+          const content = input.value.trim();
+          if (!content) return;
+          try {
+            await api.addReviewComment(reviewId, content);
+            input.value = '';
+            const commentList = reviewItem.querySelector('.comment-list');
+            loadComments(reviewId, commentList);
+          } catch (e) { showModal('Błąd', e.message, 'error'); }
+        });
+      });
+      document.querySelectorAll('.review-username').forEach(el => {
+        el.addEventListener('click', function() {
+          const uid = parseInt(this.dataset.userId);
+          if (uid) router.navigate('user', { id: uid });
+        });
+      });
+
       document.getElementById('btn-install')?.addEventListener('click', () => this.downloadAndInstall(container, gameId, g));
 
       document.getElementById('btn-launch')?.addEventListener('click', async () => {
         const exe = d.installation?.executable_path;
         if (!exe) return showModal('Info', 'Brak ścieżki do pliku wykonywalnego.', 'info');
+        addRecentPlay(gameId, g.title, g.thumbnail);
         const result = await window.VexCenter.game.launch(gameId, exe);
         if (!result.success) showModal('Błąd', result.error, 'error');
       });

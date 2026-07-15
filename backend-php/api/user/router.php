@@ -16,6 +16,14 @@ switch ($id) {
     case 'library':
         require __DIR__ . '/library.php';
         break;
+    case 'public-profile':
+        if ($method === 'get') require __DIR__ . '/public-profile.php';
+        else Response::error(405, 'Method not allowed');
+        break;
+    case 'public-profile-reviews':
+        if ($method === 'get') require __DIR__ . '/public-profile-reviews.php';
+        else Response::error(405, 'Method not allowed');
+        break;
     default:
         Response::error(404, 'User endpoint not found');
 }

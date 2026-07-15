@@ -22,6 +22,13 @@ class StorePage {
           </div>
         </div>
 
+        <div class="section" id="recent-section" style="display:none;">
+          <div class="section-header">
+            <h2>Ostatnio grane</h2>
+          </div>
+          <div id="store-recent-grid"></div>
+        </div>
+
         <div class="section">
           <div class="section-header">
             <h2>Polecane</h2>
@@ -56,6 +63,7 @@ class StorePage {
 
     document.getElementById('hero-upload')?.addEventListener('click', () => this.handleUpload());
 
+    this.loadRecent();
     this.loadFeatured();
     this.loadNewReleases();
     this.loadTopRated();
@@ -67,6 +75,17 @@ class StorePage {
       this.loadNewReleases();
       this.loadTopRated();
     }, 30000);
+  }
+
+  loadRecent() {
+    const section = document.getElementById('recent-section');
+    const grid = document.getElementById('store-recent-grid');
+    if (!section || !grid) return;
+    const recent = JSON.parse(localStorage.getItem('vex_recent') || '[]');
+    if (recent.length === 0) { section.style.display = 'none'; return; }
+    section.style.display = '';
+    const games = recent.slice(0, 5).map(r => ({ id: r.id, title: r.title, thumbnail: r.thumbnail }));
+    GameCardComponent.renderGrid(games, grid);
   }
 
   async loadFeatured() {

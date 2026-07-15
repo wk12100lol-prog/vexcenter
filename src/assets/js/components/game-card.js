@@ -24,7 +24,7 @@ class GameCardComponent {
     return shapes.join(', ');
   }
 
-  static render(game, featured = false) {
+  static render(game, featured = false, installed = false) {
     const card = document.createElement('vc-game-card');
     const artIndex = game.id || Math.floor(Math.random() * 1000);
     const artBg = this.generateArt(artIndex);
@@ -37,9 +37,16 @@ class GameCardComponent {
             ${hasImage ? `<img src="${img(game.thumbnail)}" alt="${game.title}" loading="lazy" onerror="this.style.display='none'" />` : ''}
           </div>
           <div class="overlay"></div>
-          <div class="play-hint">
-            <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          </div>
+          ${installed ? `
+            <button class="play-overlay-btn" data-game-id="${game.id}" data-exe="${game.executable_path || ''}">
+              <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Play
+            </button>
+          ` : `
+            <div class="play-hint">
+              <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </div>
+          `}
         </div>
         <div class="info">
           <h3 title="${game.title}">${game.title}</h3>
@@ -63,14 +70,31 @@ class GameCardComponent {
       </div>
     `;
 
-    card.querySelector('.game-card').addEventListener('click', () => {
+    card.querySelector('.game-card').addEventListener('click', function(e) {
+      if (e.target.closest('.play-overlay-btn')) return;
       router.navigate('game', { id: game.id });
     });
+
+    const playBtn = card.querySelector('.play-overlay-btn');
+    if (playBtn) {
+      playBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const exePath = this.dataset.exe;
+        if (exePath && window.VexCenter?.game?.launch) {
+          addRecentPlay(game.id, game.title, game.thumbnail);
+          window.VexCenter.game.launch(game.id, exePath).then(r => {
+            if (!r.success) showModal('Blad', r.error, 'error');
+          });
+        } else {
+          router.navigate('game', { id: game.id });
+        }
+      });
+    }
 
     return card;
   }
 
-  static renderGrid(games, container, featuredId = null) {
+  static renderGrid(games, container, featuredId = null, installedIds = null) {
     container.innerHTML = '';
     if (!games || games.length === 0) {
       container.innerHTML = `
@@ -93,7 +117,8 @@ class GameCardComponent {
     grid.className = 'game-grid';
     games.forEach((game) => {
       const isFeatured = featuredId && game.id === featuredId;
-      grid.appendChild(GameCardComponent.render(game, isFeatured));
+      const isInstalled = installedIds && installedIds.has(game.id);
+      grid.appendChild(GameCardComponent.render(game, isFeatured, isInstalled));
     });
     container.appendChild(grid);
   }
