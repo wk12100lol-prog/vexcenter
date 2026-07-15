@@ -10,15 +10,10 @@ if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'])) {
     Response::error(400, 'Invalid avatar format. Allowed: jpg, png, webp, gif');
 }
 
-$filename = 'avatars/' . $user['id'] . '_' . uniqid() . '.' . $ext;
-$dest = __DIR__ . '/../../' . $filename;
-move_uploaded_file($_FILES['avatar']['tmp_name'], $dest);
+$data = file_get_contents($_FILES['avatar']['tmp_name']);
+$mime = mime_content_type($_FILES['avatar']['tmp_name']);
+$base64 = 'data:' . $mime . ';base64,' . base64_encode($data);
 
-// Remove old avatar if it exists
-if (!empty($user['avatar']) && file_exists(__DIR__ . '/../../' . $user['avatar'])) {
-    @unlink(__DIR__ . '/../../' . $user['avatar']);
-}
+Database::execute("UPDATE users SET avatar = ? WHERE id = ?", [$base64, $user['id']]);
 
-Database::execute("UPDATE users SET avatar = ? WHERE id = ?", [$filename, $user['id']]);
-
-Response::success(['avatar' => $filename], 'Avatar updated');
+Response::success(['avatar' => $base64], 'Avatar updated');

@@ -19,7 +19,7 @@ $game['tags'] = $game['tags'] ? explode(',', $game['tags']) : [];
 $downloads = Database::fetchAll("SELECT * FROM game_downloads WHERE game_id = ? ORDER BY created_at DESC", [$id]);
 $screenshots = Database::fetchAll("SELECT * FROM game_screenshots WHERE game_id = ? ORDER BY sort_order ASC", [$id]);
 $reviews = Database::fetchAll(
-    "SELECT r.*, u.username, u.avatar FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.game_id = ? ORDER BY r.created_at DESC LIMIT 20",
+    "SELECT r.*, u.username FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.game_id = ? ORDER BY r.created_at DESC LIMIT 20",
     [$id]
 );
 $isInstalled = false;
