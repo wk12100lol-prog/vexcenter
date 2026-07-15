@@ -1,0 +1,9 @@
+/node_modules
+/dist
+/installer
+/scripts
+/.git
+*.exe
+*.zip
+*.7z
+*.map
