@@ -201,10 +201,13 @@
     router.register('user', (c, p) => userProfilePage.render(c, p));
   }
 
+  let _updatePrompted = false;
   function initAutoUpdateListeners() {
     if (!window.VexCenter?.update) return;
     const appVersion = '1.4.1';
     window.VexCenter.update.onAvailable(async (info) => {
+      if (_updatePrompted) return;
+      _updatePrompted = true;
       if (localStorage.getItem('vex_auto_update') === 'true') {
         showModal('Aktualizacja', 'Pobieranie wersji ' + info.version + '...', 'info');
         await window.VexCenter.update.download();
