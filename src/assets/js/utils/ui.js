@@ -165,3 +165,25 @@ const downloadManager = {
     if (this._barEl) { this._barEl.remove(); this._barEl = null; }
   }
 };
+
+// Launch overlay
+function showLaunchOverlay(title) {
+  const existing = document.getElementById('vex-launch-overlay');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'vex-launch-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;animation:fadeIn 0.15s ease;';
+  overlay.innerHTML = `
+    <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:32px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+      <div style="width:32px;height:32px;border:3px solid rgba(124,58,237,0.2);border-top-color:#7c3aed;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;"></div>
+      <div style="font-size:15px;font-weight:600;">Uruchamianie...</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:4px;">${title}</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function hideLaunchOverlay() {
+  const el = document.getElementById('vex-launch-overlay');
+  if (el) el.remove();
+}

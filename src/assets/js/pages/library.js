@@ -234,9 +234,10 @@ class LibraryPage {
       return;
     }
     if (window.VexCenter?.game?.launch) {
+      showLaunchOverlay(name || 'Gra');
       window.VexCenter.game.launch(null, exePath)
-        .then(r => { if (!r.success) showModal('Błąd', r.error || 'Nieznany błąd', 'error'); })
-        .catch(e => showModal('Błąd', e.message, 'error'));
+        .then(r => { hideLaunchOverlay(); if (!r.success) showModal('Błąd', r.error || 'Nieznany błąd', 'error'); })
+        .catch(e => { hideLaunchOverlay(); showModal('Błąd', e.message, 'error'); });
     } else {
       showModal('Info', 'Funkcja uruchamiania dostępna tylko w aplikacji desktopowej.', 'info');
     }

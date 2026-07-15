@@ -77,18 +77,20 @@ class GameCardComponent {
 
     const playBtn = card.querySelector('.play-overlay-btn');
     if (playBtn) {
-      playBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const exePath = this.dataset.exe;
-        if (exePath && window.VexCenter?.game?.launch) {
-          addRecentPlay(game.id, game.title, game.thumbnail);
-          window.VexCenter.game.launch(game.id, exePath).then(r => {
-            if (!r.success) showModal('Blad', r.error, 'error');
-          });
-        } else {
-          router.navigate('game', { id: game.id });
-        }
+  playBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const exePath = this.dataset.exe;
+    if (exePath && window.VexCenter?.game?.launch) {
+      addRecentPlay(game.id, game.title, game.thumbnail);
+      showLaunchOverlay(game.title);
+      window.VexCenter.game.launch(game.id, exePath).then(r => {
+        hideLaunchOverlay();
+        if (!r.success) showModal('Blad', r.error, 'error');
       });
+    } else {
+      router.navigate('game', { id: game.id });
+    }
+  });
     }
 
     return card;

@@ -150,7 +150,9 @@ class GameDetailPage {
         const exe = d.installation?.executable_path;
         if (!exe) return showModal('Info', 'Brak ścieżki do pliku wykonywalnego.', 'info');
         addRecentPlay(gameId, g.title, g.thumbnail);
+        showLaunchOverlay(g.title);
         const result = await window.VexCenter.game.launch(gameId, exe);
+        hideLaunchOverlay();
         if (!result.success) showModal('Błąd', result.error, 'error');
       });
 

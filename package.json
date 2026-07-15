@@ -1,6 +1,6 @@
 {
   "name": "vexcenter",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "VexCenter - platforma dystrybucji gier cyfrowych",
   "main": "main.js",
   "scripts": {
