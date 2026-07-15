@@ -137,7 +137,7 @@ class GameDetailPage {
           } catch (e) { showModal('Błąd', e.message, 'error'); }
         });
       });
-      document.querySelectorAll('.review-username').forEach(el => {
+      document.querySelectorAll('.review-username, .comment-username').forEach(el => {
         el.addEventListener('click', function() {
           const uid = parseInt(this.dataset.userId);
           if (uid) router.navigate('user', { id: uid });

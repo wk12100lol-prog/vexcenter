@@ -8,16 +8,20 @@ $user = Database::fetch(
 );
 if (!$user) Response::error(404, 'User not found');
 
-$stats = Database::fetch(
-    "SELECT
-        (SELECT COUNT(*) FROM purchases WHERE user_id = ?) as gameCount,
-        (SELECT COUNT(*) FROM reviews WHERE user_id = ?) as reviewCount",
-    [$targetUserId, $targetUserId]
-);
+try {
+    $stats = Database::fetch(
+        "SELECT
+            (SELECT COUNT(*) FROM purchases WHERE user_id = ?) as gameCount,
+            (SELECT COUNT(*) FROM reviews WHERE user_id = ?) as reviewCount",
+        [$targetUserId, $targetUserId]
+    );
+} catch (Exception $e) {
+    $stats = ['gameCount' => 0, 'reviewCount' => 0];
+}
 
 Response::success([
     'user' => array_merge($user, [
-        'gameCount' => (int)$stats['gameCount'],
-        'reviewCount' => (int)$stats['reviewCount'],
+        'gameCount' => (int)($stats['gameCount'] ?? 0),
+        'reviewCount' => (int)($stats['reviewCount'] ?? 0),
     ]),
 ]);

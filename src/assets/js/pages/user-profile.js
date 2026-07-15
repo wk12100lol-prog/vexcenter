@@ -6,12 +6,13 @@ class UserProfilePage {
     try {
       const data = await api.get('user/public-profile?id=' + userId);
       const u = data.user || data;
+      if (!u || !u.id) { container.innerHTML = '<div class="empty-state"><h3>Nie znaleziono użytkownika</h3></div>'; return; }
       container.innerHTML = `
         <div class="page user-profile-page">
           <button class="btn btn-ghost btn-sm" id="up-back" style="margin-bottom:16px;">← Powrót</button>
           <div class="profile-header-card">
             <div class="profile-avatar">
-              ${u.avatar ? '<img src="'+img(u.avatar)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />' : (u.username ? u.username.charAt(0).toUpperCase() : '?')}
+              ${u.avatar ? '<img src="'+img(u.avatar)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.innerHTML=this.parentElement.innerHTML" />' : (u.username ? u.username.charAt(0).toUpperCase() : '?')}
             </div>
             <div class="profile-info">
               <h2>${u.username || 'Nieznany'}</h2>
@@ -40,6 +41,7 @@ class UserProfilePage {
 
   async loadUserReviews(userId) {
     const el = document.getElementById('up-reviews');
+    if (!el) return;
     try {
       const data = await api.get('user/public-profile-reviews?user_id=' + userId);
       const reviews = data.reviews || [];
@@ -57,7 +59,8 @@ class UserProfilePage {
         </div>
       `).join('');
       el.querySelectorAll('.up-review').forEach(el2 => el2.addEventListener('click', function() {
-        router.navigate('game', { id: parseInt(this.dataset.gameId) });
+        const gid = parseInt(this.dataset.gameId);
+        if (gid) router.navigate('game', { id: gid });
       }));
     } catch { el.innerHTML = '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Błąd ładowania opinii</p>'; }
   }
