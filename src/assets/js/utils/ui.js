@@ -65,3 +65,79 @@ function logout() {
   router.navigate('store');
   location.reload();
 }
+
+// Global download manager - persists across page navigation
+const downloadManager = {
+  active: false,
+  gameId: null,
+  gameTitle: '',
+  progress: 0,
+  label: '',
+  onComplete: null,
+  _barEl: null,
+
+  show(gameId, title) {
+    this.active = true;
+    this.gameId = gameId;
+    this.gameTitle = title;
+    this.progress = 0;
+    this.label = 'Pobieranie...';
+    this._createBar();
+  },
+
+  updateProgress(pct, labelText) {
+    this.progress = pct;
+    if (labelText) this.label = labelText;
+    this._updateBar();
+  },
+
+  complete() {
+    this.active = false;
+    this._removeBar();
+    if (this.onComplete) {
+      this.onComplete(this.gameId);
+      this.onComplete = null;
+    }
+  },
+
+  fail(error) {
+    this.updateProgress(0, 'Błąd: ' + error);
+    setTimeout(() => { this.active = false; this._removeBar(); }, 4000);
+  },
+
+  _createBar() {
+    this._removeBar();
+    const bar = document.createElement('div');
+    bar.id = 'dl-bar';
+    bar.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#1a1a2e;border-top:1px solid var(--glass-border);padding:10px 20px;display:flex;align-items:center;gap:16px;animation:slideUp 0.2s ease;';
+    bar.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" style="flex-shrink:0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="dl-bar-title">${this.gameTitle}</span>
+        <span style="font-size:12px;color:rgba(255,255,255,0.4);flex-shrink:0;" id="dl-bar-label">${this.label}</span>
+      </div>
+      <div style="width:160px;flex-shrink:0;">
+        <div style="height:5px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden;">
+          <div id="dl-bar-fill" style="height:100%;width:0%;border-radius:3px;background:linear-gradient(90deg,#7c3aed,#a855f7);transition:width 0.3s;"></div>
+        </div>
+      </div>
+      <span style="font-size:11px;color:rgba(255,255,255,0.3);width:40px;text-align:right;flex-shrink:0;" id="dl-bar-pct">0%</span>
+    `;
+    document.body.appendChild(bar);
+    this._barEl = bar;
+  },
+
+  _updateBar() {
+    if (!this._barEl) return;
+    const fill = document.getElementById('dl-bar-fill');
+    const pctEl = document.getElementById('dl-bar-pct');
+    const labelEl = document.getElementById('dl-bar-label');
+    if (fill) fill.style.width = this.progress + '%';
+    if (pctEl) pctEl.textContent = Math.round(this.progress) + '%';
+    if (labelEl) labelEl.textContent = this.label;
+  },
+
+  _removeBar() {
+    if (this._barEl) { this._barEl.remove(); this._barEl = null; }
+  }
+};

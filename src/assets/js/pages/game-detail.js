@@ -37,15 +37,6 @@ class GameDetailPage {
                 `}
                 ${api.isAuthenticated && !d.is_installed && g.price === 0 ? `<button class="btn btn-secondary" id="btn-add-to-library">+ Dodaj do biblioteki</button>` : ''}
               </div>
-              <div id="install-progress" style="display:none;margin-bottom:16px;">
-                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
-                  <span id="progress-label">Pobieranie...</span>
-                  <span id="progress-pct">0%</span>
-                </div>
-                <div style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;">
-                  <div id="progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#a855f7);border-radius:3px;transition:width 0.3s;"></div>
-                </div>
-              </div>
               ${g.tags?.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;">${g.tags.map(t => `<span style="font-size:11px;padding:3px 10px;border-radius:4px;background:rgba(124,58,237,0.1);color:var(--purple-300);border:1px solid rgba(124,58,237,0.1);">${t}</span>`).join('')}</div>` : ''}
               <p style="color:rgba(255,255,255,0.6);line-height:1.6;font-size:14px;">${g.description}</p>
             </div>
@@ -131,21 +122,18 @@ class GameDetailPage {
     const installDir = await window.VexCenter.game.selectInstallPath();
     if (installDir.canceled) return;
 
-    const progressEl = document.getElementById('install-progress');
-    const bar = document.getElementById('progress-bar');
-    const pct = document.getElementById('progress-pct');
-    const label = document.getElementById('progress-label');
-    if (progressEl) progressEl.style.display = 'block';
+    downloadManager.show(gameId, game.title);
+    downloadManager.updateProgress(0, 'Pobieranie...');
 
-    this._updateProgress(0, 'Pobieranie...');
+    const progressCb = (p) => downloadManager.updateProgress(p, 'Pobieranie...');
 
     if (window.VexCenter.onDownloadProgress) {
-      window.VexCenter.onDownloadProgress((p) => this._updateProgress(p, 'Pobieranie...'));
+      window.VexCenter.onDownloadProgress(progressCb);
     }
 
     const dlResult = await window.VexCenter.game.download(game.game_file, installDir.path);
     if (!dlResult.success) {
-      this._updateProgress(0, 'Błąd pobierania: ' + dlResult.error);
+      downloadManager.fail(dlResult.error);
       return;
     }
 
@@ -155,38 +143,30 @@ class GameDetailPage {
     let extractedDir = installDir.path;
 
     if (['zip', 'rar', '7z'].includes(ext)) {
-      this._updateProgress(0, 'Rozpakowywanie...');
+      downloadManager.updateProgress(0, 'Rozpakowywanie...');
       if (ext === 'zip') {
         const extractResult = await window.VexCenter.game.extract(downloadedFile, installDir.path);
         if (!extractResult.success) {
-          this._updateProgress(0, 'Błąd rozpakowywania: ' + extractResult.error);
+          downloadManager.fail('Błąd rozpakowywania: ' + extractResult.error);
           return;
         }
       } else {
-        this._updateProgress(0, 'Rozpakuj ręcznie plik ' + downloadedFile);
+        downloadManager.updateProgress(0, 'Rozpakuj ręcznie plik ' + downloadedFile);
         showModal('Info', 'Plik ' + ext.toUpperCase() + ' nie może być automatycznie rozpakowany.\nRozpakuj go ręcznie z: ' + downloadedFile, 'info');
       }
     }
 
-    this._updateProgress(0, 'Wybierz plik wykonywalny...');
+    downloadManager.updateProgress(0, 'Wybierz plik wykonywalny...');
     const exeResult = await window.VexCenter.game.selectExecutable();
     if (exeResult.canceled) {
-      this._updateProgress(0, 'Anulowano');
+      downloadManager.updateProgress(0, 'Anulowano');
       return;
     }
 
     await api.registerInstall(gameId, installDir.path, exeResult.path);
-    this._updateProgress(100, 'Zainstalowano!');
-    setTimeout(() => this.render(container, gameId), 500);
-  }
-
-  _updateProgress(pct, labelText) {
-    const bar = document.getElementById('progress-bar');
-    const pctEl = document.getElementById('progress-pct');
-    const labelEl = document.getElementById('progress-label');
-    if (bar) bar.style.width = pct + '%';
-    if (pctEl) pctEl.textContent = pct + '%';
-    if (labelEl) labelEl.textContent = labelText;
+    downloadManager.updateProgress(100, 'Zainstalowano!');
+    downloadManager.onComplete = (id) => this.render(container, id);
+    setTimeout(() => downloadManager.complete(), 800);
   }
 }
 

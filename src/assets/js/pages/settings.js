@@ -131,7 +131,6 @@ class SettingsPage {
               <span>${f.username} ${f.status_message ? '<span style="color:rgba(255,255,255,0.3);font-size:12px;">— '+f.status_message+'</span>':''}</span>
             </div>
             <div style="display:flex;gap:6px;">
-              <button class="btn btn-sm btn-ghost" data-chat="${f.id}" title="Wyślij wiadomość">💬</button>
               <button class="btn btn-sm btn-ghost" data-remove="${f.id}" style="color:var(--red-400);">Usuń</button>
             </div>
           </div>`).join('') : '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Brak znajomych. Dodaj kogoś!</p>'}</div>
@@ -140,14 +139,6 @@ class SettingsPage {
       el.querySelectorAll('[data-accept]').forEach(b => b.addEventListener('click', async () => { await api.acceptFriend(b.dataset.accept); this.renderFriends(el); }));
       el.querySelectorAll('[data-reject]').forEach(b => b.addEventListener('click', async () => { await api.rejectFriend(b.dataset.reject); this.renderFriends(el); }));
       el.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', async () => { if(await showConfirm('Potwierdzenie', 'Usunąć znajomego?')){ await api.removeFriend(b.dataset.remove); this.renderFriends(el); }}));
-      el.querySelectorAll('[data-chat]').forEach(b => b.addEventListener('click', () => {
-        const panel = document.getElementById('chat-panel');
-        if (panel) panel.remove();
-        const chatBtn = document.getElementById('chat-btn');
-        if (chatBtn) chatBtn.click();
-        // HACK: trigger chat panel then navigate to this friend's conversation
-        setTimeout(() => headerComponent.openConversation(b.dataset.chat), 200);
-      }));
       document.getElementById('btn-add-friend')?.addEventListener('click', () => {
         const modal = document.getElementById('add-friend-modal');
         if (modal) modal.remove();
@@ -254,7 +245,7 @@ class SettingsPage {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
             </div>
             <div>
-              <div style="font-size:14px;font-weight:600;">Wersja 1.0.2</div>
+              <div style="font-size:14px;font-weight:600;">Wersja 1.1.0</div>
               <div id="update-status" style="font-size:12px;color:rgba(255,255,255,0.3);">Kliknij "Sprawdź" aby wyszukać aktualizacje</div>
             </div>
           </div>
