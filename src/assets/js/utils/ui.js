@@ -187,3 +187,32 @@ function hideLaunchOverlay() {
   const el = document.getElementById('vex-launch-overlay');
   if (el) el.remove();
 }
+
+// Prompt dialog returning Promise<string|null>
+function showPrompt(title, placeholder = '', defaultValue = '') {
+  return new Promise((resolve) => {
+    const existing = document.getElementById('vex-modal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'vex-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;animation:fadeIn 0.15s ease;';
+    modal.addEventListener('click', (e) => { if (e.target === modal) { modal.remove(); resolve(null); } });
+    modal.innerHTML = `
+      <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:28px;width:100%;max-width:380px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.4);animation:scaleIn 0.2s ease;">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">${title}</h3>
+        <input type="text" id="vex-prompt-input" placeholder="${placeholder}" value="${defaultValue}" style="width:100%;padding:10px 12px;border:1px solid var(--glass-border);border-radius:8px;background:rgba(255,255,255,0.04);color:#fff;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;margin-bottom:16px;">
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" style="flex:1;padding:10px;" id="vex-prompt-ok">OK</button>
+          <button class="btn btn-ghost" style="flex:1;padding:10px;" id="vex-prompt-cancel">Anuluj</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    const input = document.getElementById('vex-prompt-input');
+    input.focus();
+    input.select();
+    document.getElementById('vex-prompt-ok').addEventListener('click', () => { modal.remove(); resolve(input.value); });
+    document.getElementById('vex-prompt-cancel').addEventListener('click', () => { modal.remove(); resolve(null); });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { modal.remove(); resolve(input.value); } if (e.key === 'Escape') { modal.remove(); resolve(null); } });
+  });
+}

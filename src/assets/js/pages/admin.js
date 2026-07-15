@@ -80,7 +80,7 @@ class AdminPage {
         await api.approveGame(b.dataset.app); this.renderGames(el);
       }));
       el.querySelectorAll('[data-rej]').forEach(b => b.addEventListener('click', async () => {
-        const r = prompt('Powód odrzucenia:');
+        const r = await showPrompt('Powód odrzucenia', 'Powód...');
         if (r !== null) { await api.rejectGame(b.dataset.rej, r); this.renderGames(el); }
       }));
       el.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
@@ -146,7 +146,7 @@ class AdminPage {
         await api.approveDev(b.dataset.app); this.renderDevelopers(el);
       }));
       el.querySelectorAll('[data-rej]').forEach(b => b.addEventListener('click', async () => {
-        const n = prompt('Notatka do odrzucenia:'); if (n !== null) { await api.rejectDev(b.dataset.rej, n); this.renderDevelopers(el); }
+        const n = await showPrompt('Notatka do odrzucenia', 'Notatka...'); if (n !== null) { await api.rejectDev(b.dataset.rej, n); this.renderDevelopers(el); }
       }));
     } catch { el.innerHTML = '<div class="empty-state"><p>Błąd ładowania</p></div>'; }
   }
@@ -216,9 +216,9 @@ class AdminPage {
         await api.hideAnnouncement(b.dataset.del); this.renderAnnouncements(el);
       }));
       document.getElementById('btn-new-announcement')?.addEventListener('click', async () => {
-        const title = prompt('Tytuł ogłoszenia:'); if (!title) return;
-        const content = prompt('Treść:'); if (!content) return;
-        const type = prompt('Typ (info/warning/update/maintenance):') || 'info';
+        const title = await showPrompt('Tytuł ogłoszenia', 'Tytuł...'); if (!title) return;
+        const content = await showPrompt('Treść', 'Treść...'); if (!content) return;
+        const type = await showPrompt('Typ', 'info/warning/update/maintenance', 'info') || 'info';
         await api.createAnnouncement({ title, content, type });
         this.renderAnnouncements(el);
       });

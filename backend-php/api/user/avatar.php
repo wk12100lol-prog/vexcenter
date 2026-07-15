@@ -10,6 +10,11 @@ if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'])) {
     Response::error(400, 'Invalid avatar format. Allowed: jpg, png, webp, gif');
 }
 
+// Limit file size to 2MB
+if ($_FILES['avatar']['size'] > 2 * 1024 * 1024) {
+    Response::error(400, 'Avatar file too large. Maximum 2MB.');
+}
+
 $mime = [
     'jpg' => 'image/jpeg',
     'jpeg' => 'image/jpeg',
@@ -20,6 +25,13 @@ $mime = [
 
 $data = file_get_contents($_FILES['avatar']['tmp_name']);
 $base64 = 'data:' . $mime . ';base64,' . base64_encode($data);
+
+// Ensure avatar column can hold base64 data
+try {
+    Database::execute("ALTER TABLE users MODIFY COLUMN avatar LONGTEXT DEFAULT NULL");
+} catch (Exception $e) {
+    // Column already altered or not needed
+}
 
 Database::execute("UPDATE users SET avatar = ? WHERE id = ?", [$base64, $user['id']]);
 

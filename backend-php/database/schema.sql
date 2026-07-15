@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(50) NOT NULL UNIQUE,
   email VARCHAR(255) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
-  avatar VARCHAR(500) DEFAULT NULL,
+  avatar LONGTEXT DEFAULT NULL,
   role ENUM('user','developer','admin') NOT NULL DEFAULT 'user',
   status_message VARCHAR(200) DEFAULT NULL,
   display_name VARCHAR(100) DEFAULT NULL,
