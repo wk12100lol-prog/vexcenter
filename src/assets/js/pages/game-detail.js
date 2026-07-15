@@ -127,12 +127,14 @@ class GameDetailPage {
           const data = await api.getReviewComments(reviewId);
           const comments = data.comments || [];
           if (comments.length === 0) { commentListEl.innerHTML = ''; return; }
-          commentListEl.innerHTML = comments.map(c => `
-            <div style="padding:4px 0;display:flex;gap:6px;align-items:flex-start;">
+          commentListEl.innerHTML = comments.map(c => {
+            const avatarHtml = c.avatar ? `<img src="${img(c.avatar)}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;flex-shrink:0;" />` : `<div style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0;">${c.username.charAt(0).toUpperCase()}</div>`;
+            return `<div style="padding:4px 0;display:flex;gap:6px;align-items:flex-start;">
+              ${avatarHtml}
               <span style="font-weight:600;font-size:11px;cursor:pointer;" class="comment-username" data-user-id="${c.user_id}">${c.username}:</span>
               <span style="color:rgba(255,255,255,0.5);font-size:11px;">${c.content}</span>
-            </div>
-          `).join('');
+            </div>`;
+          }).join('');
         } catch { commentListEl.innerHTML = '<span style="color:#ef4444;font-size:11px;">Błąd</span>'; }
       }
       document.querySelectorAll('.toggle-comments').forEach(btn => {

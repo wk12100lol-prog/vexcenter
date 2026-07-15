@@ -90,7 +90,7 @@
           <a id="splash-toggle" style="color:var(--purple-400);cursor:pointer;font-weight:600;">Zarejestruj się</a>
         </p>
         <div id="splash-error" style="margin-top:12px;padding:10px;border-radius:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);display:none;font-size:13px;color:var(--red-400);"></div>
-        <p style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.12);">v1.4.0 — Gaming Platform</p>
+        <p style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.12);">v1.4.1 — Gaming Platform</p>
         <a id="splash-diag" style="font-size:10px;color:rgba(255,255,255,0.08);cursor:pointer;display:block;margin-top:4px;">diagnostyka</a>
       </div>
     `;
@@ -201,6 +201,27 @@
     router.register('user', (c, p) => userProfilePage.render(c, p));
   }
 
+  function initAutoUpdateListeners() {
+    if (!window.VexCenter?.update) return;
+    const appVersion = '1.4.1';
+    window.VexCenter.update.onAvailable(async (info) => {
+      if (localStorage.getItem('vex_auto_update') === 'true') {
+        showModal('Aktualizacja', 'Pobieranie wersji ' + info.version + '...', 'info');
+        await window.VexCenter.update.download();
+      } else {
+        const confirmed = await showConfirm('Dostępna aktualizacja', 'Nowa wersja ' + info.version + ' jest dostępna (masz ' + appVersion + '). Pobrać teraz?');
+        if (confirmed) {
+          await window.VexCenter.update.download();
+        }
+      }
+    });
+    window.VexCenter.update.onDownloaded(() => {
+      showConfirm('Aktualizacja gotowa', 'Nowa wersja została pobrana. Zainstalować teraz?').then(ok => {
+        if (ok) window.VexCenter.update.install();
+      });
+    });
+  }
+
   async function init() {
     const savedTheme = localStorage.getItem('vex_theme');
     if (savedTheme === 'light') document.documentElement.classList.add('theme-light');
@@ -225,13 +246,16 @@
         const restored = await api.restoreSession();
         if (restored) {
           headerComponent.updateUser(api.user);
-          return createSplash(true);
+          createSplash(true);
+          initAutoUpdateListeners();
+          return;
         }
       } catch (e) {
         console.error('[Init] restoreSession failed:', e);
       }
     }
     createSplash(false);
+    initAutoUpdateListeners();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

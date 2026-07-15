@@ -290,17 +290,29 @@ class SettingsPage {
   }
 
   async renderUpdates(el) {
+    const autoUpdate = localStorage.getItem('vex_auto_update') === 'true';
     el.innerHTML = `
       <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:24px;">
         <h3 style="margin-bottom:4px;">Aktualizacje</h3>
         <p style="color:rgba(255,255,255,0.3);font-size:13px;margin-bottom:20px;">Sprawdź czy dostępna jest nowsza wersja VexCenter.</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(124,58,237,0.08);border-radius:8px;border:1px solid rgba(124,58,237,0.15);margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <div><div style="font-size:14px;font-weight:600;">Auto-aktualizacja</div><div style="font-size:12px;color:rgba(255,255,255,0.3);">Automatycznie pobieraj i instaluj aktualizacje przy uruchomieniu</div></div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">
+            <input type="checkbox" id="auto-update-toggle" ${autoUpdate ? 'checked' : ''} style="opacity:0;width:0;height:0;" />
+            <span style="position:absolute;cursor:pointer;inset:0;background:${autoUpdate ? '#7c3aed' : 'rgba(255,255,255,0.15)'};border-radius:12px;transition:0.2s;"></span>
+            <span style="position:absolute;top:2px;left:${autoUpdate ? '22px' : '2px'};width:20px;height:20px;border-radius:50%;background:#fff;transition:0.2s;"></span>
+          </label>
+        </div>
         <div style="background:rgba(124,58,237,0.08);border-radius:8px;border:1px solid rgba(124,58,237,0.15);padding:16px;margin-bottom:20px;">
           <div style="display:flex;align-items:center;gap:12px;">
             <div style="width:40px;height:40px;border-radius:50%;background:rgba(124,58,237,0.15);display:flex;align-items:center;justify-content:center;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
             </div>
             <div>
-              <div style="font-size:14px;font-weight:600;">Wersja 1.4.0</div>
+              <div style="font-size:14px;font-weight:600;">Wersja 1.4.1</div>
               <div id="update-status" style="font-size:12px;color:rgba(255,255,255,0.3);">Kliknij "Sprawdź" aby wyszukać aktualizacje</div>
             </div>
           </div>
@@ -381,6 +393,14 @@ class SettingsPage {
 
     btnInstall.addEventListener('click', () => {
       window.VexCenter.update.install();
+    });
+
+    document.getElementById('auto-update-toggle')?.addEventListener('change', function() {
+      localStorage.setItem('vex_auto_update', this.checked ? 'true' : 'false');
+      const bg = this.nextElementSibling;
+      const dot = bg.nextElementSibling;
+      bg.style.background = this.checked ? '#7c3aed' : 'rgba(255,255,255,0.15)';
+      dot.style.left = this.checked ? '22px' : '2px';
     });
   }
 }

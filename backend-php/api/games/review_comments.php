@@ -3,7 +3,7 @@ if ($method === 'get') {
     $reviewId = $_GET['review_id'] ?? null;
     if (!$reviewId) Response::error(400, 'review_id required');
     $comments = Database::fetchAll(
-        "SELECT rc.*, u.username FROM review_comments rc JOIN users u ON rc.user_id = u.id WHERE rc.review_id = ? ORDER BY rc.created_at ASC",
+        "SELECT rc.*, u.username, u.avatar FROM review_comments rc JOIN users u ON rc.user_id = u.id WHERE rc.review_id = ? ORDER BY rc.created_at ASC",
         [$reviewId]
     );
     Response::success(['comments' => $comments]);
