@@ -12,9 +12,10 @@ if (!$user) Response::error(404, 'User not found');
 if ($user['avatar'] && !str_starts_with($user['avatar'], 'data:')) {
     $avatarPath = __DIR__ . '/../../' . $user['avatar'];
     if (file_exists($avatarPath)) {
+        $ext = strtolower(pathinfo($user['avatar'], PATHINFO_EXTENSION));
+        $mime = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'gif' => 'image/gif'][$ext] ?? 'image/png';
         $avatarData = file_get_contents($avatarPath);
-        $avatarMime = mime_content_type($avatarPath);
-        $user['avatar'] = 'data:' . $avatarMime . ';base64,' . base64_encode($avatarData);
+        $user['avatar'] = 'data:' . $mime . ';base64,' . base64_encode($avatarData);
     } else {
         $user['avatar'] = null;
     }

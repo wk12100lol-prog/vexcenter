@@ -10,8 +10,15 @@ if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'])) {
     Response::error(400, 'Invalid avatar format. Allowed: jpg, png, webp, gif');
 }
 
+$mime = [
+    'jpg' => 'image/jpeg',
+    'jpeg' => 'image/jpeg',
+    'png' => 'image/png',
+    'webp' => 'image/webp',
+    'gif' => 'image/gif',
+][$ext];
+
 $data = file_get_contents($_FILES['avatar']['tmp_name']);
-$mime = mime_content_type($_FILES['avatar']['tmp_name']);
 $base64 = 'data:' . $mime . ';base64,' . base64_encode($data);
 
 Database::execute("UPDATE users SET avatar = ? WHERE id = ?", [$base64, $user['id']]);
