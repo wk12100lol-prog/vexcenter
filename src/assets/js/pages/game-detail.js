@@ -43,6 +43,33 @@ class GameDetailPage {
           </div>
 
           <div class="section" style="margin-top:24px;">
+            <div class="section-header"><h2 data-i18n="stats">Statystyki</h2></div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:140px;background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:16px;text-align:center;">
+                <div style="font-size:28px;font-weight:800;color:var(--purple-400);">${g.download_count||0}</div>
+                <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;" data-i18n="downloads">Pobrania</div>
+                <div style="margin-top:8px;height:4px;border-radius:2px;background:rgba(255,255,255,0.06);overflow:hidden;">
+                  <div style="height:100%;width:${Math.min(100,(g.download_count||0)/50*100)}%;border-radius:2px;background:linear-gradient(90deg,#7c3aed,#a855f7);transition:width 0.5s;"></div>
+                </div>
+              </div>
+              <div style="flex:1;min-width:140px;background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:16px;text-align:center;">
+                <div style="font-size:28px;font-weight:800;color:var(--green-400);">${g.play_count||0}</div>
+                <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;" data-i18n="plays">Uruchomienia</div>
+                <div style="margin-top:8px;height:4px;border-radius:2px;background:rgba(255,255,255,0.06);overflow:hidden;">
+                  <div style="height:100%;width:${Math.min(100,(g.play_count||0)/20*100)}%;border-radius:2px;background:linear-gradient(90deg,#10b981,#34d399);transition:width 0.5s;"></div>
+                </div>
+              </div>
+              <div style="flex:1;min-width:140px;background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:16px;text-align:center;">
+                <div style="font-size:28px;font-weight:800;color:var(--yellow-400);">${g.rating ? '★ '+g.rating.toFixed(1) : '—'}</div>
+                <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;" data-i18n="rating">Ocena</div>
+                <div style="margin-top:8px;height:4px;border-radius:2px;background:rgba(255,255,255,0.06);overflow:hidden;">
+                  <div style="height:100%;width:${(g.rating||0)/5*100}%;border-radius:2px;background:linear-gradient(90deg,#f59e0b,#fbbf24);transition:width 0.5s;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section" style="margin-top:24px;">
             <div class="section-header"><h2>Opinie (${d.reviews?.length||0})</h2></div>
             <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:16px;">
               ${api.isAuthenticated ? `

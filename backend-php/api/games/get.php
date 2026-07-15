@@ -15,6 +15,7 @@ if (!$game) Response::error(404, 'Game not found');
 $game['price'] = (float)$game['price'];
 $game['rating'] = $game['rating'] ? (float)$game['rating'] : null;
 $game['tags'] = $game['tags'] ? explode(',', $game['tags']) : [];
+$game['play_count'] = (int)($game['play_count'] ?? 0);
 
 $downloads = Database::fetchAll("SELECT * FROM game_downloads WHERE game_id = ? ORDER BY created_at DESC", [$id]);
 $screenshots = Database::fetchAll("SELECT * FROM game_screenshots WHERE game_id = ? ORDER BY sort_order ASC", [$id]);

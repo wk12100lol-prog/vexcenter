@@ -18,6 +18,8 @@ if ($method === 'get' && $id === 'search') {
     require __DIR__ . '/install.php';
 } elseif ($id && $subresource === 'launch') {
     require __DIR__ . '/launch.php';
+} elseif ($id && $subresource === 'play') {
+    require __DIR__ . '/play.php';
 } elseif ($id && $subresource === 'reviews' && $method === 'post') {
     require __DIR__ . '/submit_review.php';
 } else {

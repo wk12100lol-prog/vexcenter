@@ -3,6 +3,7 @@ const LANG = {
     store: 'Sklep', library: 'Biblioteka', profile: 'Profil',
     settings: 'Ustawienia', logout: 'Wyloguj', play: 'Graj',
     install: 'Zainstaluj', download: 'Pobierz', search: 'Szukaj...',
+    search_users: 'Szukaj użytkowników...',
     recent: 'Ostatnio grane', featured: 'Polecane',
     free: 'Darmowa', rating: 'Ocena', reviews: 'Opinie',
     comments: 'Komentarze', login: 'Zaloguj', register: 'Rejestracja',
@@ -14,7 +15,7 @@ const LANG = {
     welcome_title: 'Witaj w VexCenter',
     welcome_desc: 'Odkrywaj, graj i dziel się swoimi grami ze społecznością. Każdy może zostać twórcą.',
     see_all: 'Zobacz wszystkie',
-    all: 'All', free_filter: 'Darmowe', paid_filter: 'Płatne', top_filter: 'Najwyżej oceniane',
+    all: 'Wszystkie', free_filter: 'Darmowe', paid_filter: 'Płatne', top_filter: 'Najwyżej oceniane',
     back_to_store: 'Powrót do sklepu',
     write_review: 'Napisz opinię...', submit: 'Wyślij',
     downloads_count: 'pobrań', by: 'przez',
@@ -24,11 +25,14 @@ const LANG = {
     error: 'Błąd',
     browse_section: 'Przeglądaj', community: 'Społeczność',
     admin_panel: 'Panel Admina', admin: 'Administracja',
+    stats: 'Statystyki', downloads: 'Pobrania', plays: 'Uruchomienia',
+    total_plays: 'Liczba uruchomień', users_search: 'Użytkownicy',
   },
   en: {
     store: 'Store', library: 'Library', profile: 'Profile',
     settings: 'Settings', logout: 'Logout', play: 'Play',
     install: 'Install', download: 'Download', search: 'Search...',
+    search_users: 'Search users...',
     recent: 'Recently Played', featured: 'Featured',
     free: 'Free', rating: 'Rating', reviews: 'Reviews',
     comments: 'Comments', login: 'Sign In', register: 'Register',
@@ -50,11 +54,47 @@ const LANG = {
     error: 'Error',
     browse_section: 'Browse', community: 'Community',
     admin_panel: 'Admin Panel', admin: 'Administration',
+    stats: 'Stats', downloads: 'Downloads', plays: 'Launches',
+    total_plays: 'Total launches', users_search: 'Users',
+  },
+  de: {
+    store: 'Shop', library: 'Bibliothek', profile: 'Profil',
+    settings: 'Einstellungen', logout: 'Abmelden', play: 'Spielen',
+    install: 'Installieren', download: 'Herunterladen', search: 'Suchen...',
+    search_users: 'Benutzer suchen...',
+    recent: 'Zuletzt gespielt', featured: 'Empfohlen',
+    free: 'Kostenlos', rating: 'Bewertung', reviews: 'Bewertungen',
+    comments: 'Kommentare', login: 'Anmelden', register: 'Registrieren',
+    light: 'Hell', dark: 'Dunkel', language: 'Sprache',
+    browse: 'Durchsuchen', upload: 'Spiel hochladen',
+    newest: 'Neuheiten', top_rated: 'Top bewertet',
+    no_games: 'Keine Spiele', no_results: 'Keine Ergebnisse',
+    no_recent: 'Keine kürzlich gespielten Spiele',
+    welcome_title: 'Willkommen bei VexCenter',
+    welcome_desc: 'Entdecke, spiele und teile deine Spiele mit der Community. Jeder kann ein Creator sein.',
+    see_all: 'Alle anzeigen',
+    all: 'Alle', free_filter: 'Kostenlos', paid_filter: 'Bezahlt', top_filter: 'Top bewertet',
+    back_to_store: 'Zurück zum Shop',
+    write_review: 'Schreibe eine Bewertung...', submit: 'Senden',
+    downloads_count: 'Downloads', by: 'von',
+    comment_placeholder: 'Schreibe einen Kommentar...',
+    no_reviews: 'Noch keine Bewertungen. Sei der Erste!',
+    no_comments: 'Keine Kommentare',
+    error: 'Fehler',
+    browse_section: 'Durchsuchen', community: 'Community',
+    admin_panel: 'Admin-Panel', admin: 'Administration',
+    stats: 'Statistiken', downloads: 'Downloads', plays: 'Starts',
+    total_plays: 'Gesamtstarts', users_search: 'Benutzer',
   }
 };
 
-let currentLang = localStorage.getItem('vex_lang') || 'pl';
-function __(key) { return LANG[currentLang][key] || key; }
+let currentLang = localStorage.getItem('vex_lang') || '';
+if (!currentLang) {
+  const navLang = (navigator.language || '').slice(0, 2);
+  currentLang = LANG[navLang] ? navLang : 'pl';
+  localStorage.setItem('vex_lang', currentLang);
+}
+function __(key) { return LANG[currentLang] && LANG[currentLang][key] ? LANG[currentLang][key] : (LANG['en'][key] || key); }
 function setLang(l) { currentLang = l; localStorage.setItem('vex_lang', l); document.dispatchEvent(new Event('langchange')); }
 
 // Apply language to sidebar and header automatically on langchange

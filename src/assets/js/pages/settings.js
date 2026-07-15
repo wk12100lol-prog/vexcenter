@@ -89,6 +89,7 @@ class SettingsPage {
             <div style="display:flex;gap:8px;">
               <button class="btn btn-sm ${(localStorage.getItem('vex_lang')||'pl')==='pl'?'btn-primary':'btn-secondary'}" id="lang-pl-btn">PL</button>
               <button class="btn btn-sm ${(localStorage.getItem('vex_lang')||'pl')==='en'?'btn-primary':'btn-secondary'}" id="lang-en-btn">EN</button>
+              <button class="btn btn-sm ${(localStorage.getItem('vex_lang')||'pl')==='de'?'btn-primary':'btn-secondary'}" id="lang-de-btn">DE</button>
             </div>
           </div>
         </div>
@@ -129,11 +130,19 @@ class SettingsPage {
       if (typeof setLang === 'function') { setLang('pl'); }
       document.getElementById('lang-pl-btn').className = 'btn btn-sm btn-primary';
       document.getElementById('lang-en-btn').className = 'btn btn-sm btn-secondary';
+      document.getElementById('lang-de-btn').className = 'btn btn-sm btn-secondary';
     });
     document.getElementById('lang-en-btn')?.addEventListener('click', () => {
       if (typeof setLang === 'function') { setLang('en'); }
       document.getElementById('lang-en-btn').className = 'btn btn-sm btn-primary';
       document.getElementById('lang-pl-btn').className = 'btn btn-sm btn-secondary';
+      document.getElementById('lang-de-btn').className = 'btn btn-sm btn-secondary';
+    });
+    document.getElementById('lang-de-btn')?.addEventListener('click', () => {
+      if (typeof setLang === 'function') { setLang('de'); }
+      document.getElementById('lang-de-btn').className = 'btn btn-sm btn-primary';
+      document.getElementById('lang-pl-btn').className = 'btn btn-sm btn-secondary';
+      document.getElementById('lang-en-btn').className = 'btn btn-sm btn-secondary';
     });
 
     document.getElementById('s-avatar-input')?.addEventListener('change', async (e) => {
@@ -291,7 +300,7 @@ class SettingsPage {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
             </div>
             <div>
-              <div style="font-size:14px;font-weight:600;">Wersja 1.3.1</div>
+              <div style="font-size:14px;font-weight:600;">Wersja 1.4.0</div>
               <div id="update-status" style="font-size:12px;color:rgba(255,255,255,0.3);">Kliknij "Sprawdź" aby wyszukać aktualizacje</div>
             </div>
           </div>

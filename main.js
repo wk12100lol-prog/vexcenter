@@ -109,8 +109,12 @@ ipcMain.handle('api:put', async (_, ep, d) => doRequest('PUT', ep, d));
 ipcMain.handle('api:delete', async (_, ep) => doRequest('DELETE', ep));
 
 ipcMain.handle('game:launch', async (_, id, exe) => {
-  try { if (!fs.existsSync(exe)) return { success: false, error: 'File not found' }; exec('"'+exe+'"', (e) => e && console.error(e)); return { success: true }; }
-  catch (e) { return { success: false, error: e.message }; }
+  try {
+    if (!fs.existsSync(exe)) return { success: false, error: 'File not found' };
+    if (id) doRequest('post', 'games/' + id + '/play');
+    exec('"'+exe+'"', (e) => e && console.error(e));
+    return { success: true };
+  } catch (e) { return { success: false, error: e.message }; }
 });
 ipcMain.handle('game:select-install-path', async () => { const r = await dialog.showOpenDialog(mainWindow, {properties:['openDirectory']}); return r.canceled ? {canceled:true} : {path: r.filePaths[0]}; });
 ipcMain.handle('game:select-executable', async () => { const r = await dialog.showOpenDialog(mainWindow, {properties:['openFile'], filters:[{name:'Wykonywalne', extensions:['exe','bat','cmd','lnk']},{name:'Wszystkie', extensions:['*']}]}); return r.canceled ? {canceled:true} : {path: r.filePaths[0]}; });
