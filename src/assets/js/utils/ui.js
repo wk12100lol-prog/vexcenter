@@ -82,6 +82,7 @@ const downloadManager = {
   label: '',
   onComplete: null,
   _barEl: null,
+  _watchdog: null,
 
   show(gameId, title) {
     this.active = true;
@@ -90,6 +91,7 @@ const downloadManager = {
     this.progress = 0;
     this.label = 'Pobieranie...';
     this._createBar();
+    this._startWatchdog();
   },
 
   updateProgress(pct, labelText) {
@@ -100,6 +102,7 @@ const downloadManager = {
 
   complete() {
     this.active = false;
+    this._stopWatchdog();
     this._removeBar();
     if (this.onComplete) {
       this.onComplete(this.gameId);
@@ -109,7 +112,20 @@ const downloadManager = {
 
   fail(error) {
     this.updateProgress(0, 'Błąd: ' + error);
-    setTimeout(() => { this.active = false; this._removeBar(); }, 4000);
+    setTimeout(() => { this.active = false; this._stopWatchdog(); this._removeBar(); }, 4000);
+  },
+
+  _startWatchdog() {
+    this._stopWatchdog();
+    this._watchdog = setInterval(() => {
+      if (!this.active) { this._stopWatchdog(); return; }
+      if (!document.getElementById('dl-bar')) this._createBar();
+      else this._updateBar();
+    }, 500);
+  },
+
+  _stopWatchdog() {
+    if (this._watchdog) { clearInterval(this._watchdog); this._watchdog = null; }
   },
 
   _createBar() {
@@ -135,7 +151,8 @@ const downloadManager = {
   },
 
   _updateBar() {
-    if (!this._barEl) return;
+    if (!this._barEl && !document.getElementById('dl-bar')) return;
+    if (!this._barEl) this._barEl = document.getElementById('dl-bar');
     const fill = document.getElementById('dl-bar-fill');
     const pctEl = document.getElementById('dl-bar-pct');
     const labelEl = document.getElementById('dl-bar-label');
