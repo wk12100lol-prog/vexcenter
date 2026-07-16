@@ -1349,6 +1349,16 @@ vc-game-card {
 @keyframes heartbeat { 0%,100% { transform: scale(1); } 14% { transform: scale(1.15); } 28% { transform: scale(1); } 42% { transform: scale(1.1); } 70% { transform: scale(1); } }
 @keyframes morph { 0%,100% { border-radius: 60% 40% 30% 70%/60% 30% 70% 40%; } 25% { border-radius: 30% 60% 70% 40%/50% 60% 30% 60%; } 50% { border-radius: 50% 60% 30% 60%/40% 50% 60% 50%; } 75% { border-radius: 60% 40% 50% 40%/30% 60% 40% 70%; } }
 @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+@keyframes starTwinkle { 0% { opacity:0.5; } 100% { opacity:1; } }
+@keyframes nebulaDrift { 0% { transform:translate(0,0) scale(1); } 100% { transform:translate(60px,-40px) scale(1.4); } }
+@keyframes ringPulse1 { 0% { width:100px; height:100px; opacity:0.6; border-width:2px; } 100% { width:500px; height:500px; opacity:0; border-width:0.5px; } }
+@keyframes ringPulse2 { 0% { width:200px; height:200px; opacity:0.6; border-width:2px; } 100% { width:500px; height:500px; opacity:0; border-width:0.5px; } }
+@keyframes ringPulse3 { 0% { width:300px; height:300px; opacity:0.6; border-width:2px; } 100% { width:500px; height:500px; opacity:0; border-width:0.5px; } }
+@keyframes splashParticle3D { 0% { opacity:0; transform:translate(-50%,-50%) translateZ(0) scale(0); } 25% { opacity:var(--max-op,0.9); } 100% { opacity:0; transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty))) translateZ(var(--tz,0)) scale(0.2); } }
+@keyframes centerFloat { 0%,100% { transform:translateZ(0) translateY(0); } 50% { transform:translateZ(20px) translateY(-10px); } }
+@keyframes titleReveal { from { opacity:0; transform:translateZ(30px) translateY(30px) scale(0.9); filter:blur(8px); } to { opacity:1; transform:translateZ(30px) translateY(0) scale(1); filter:blur(0); } }
+@keyframes taglineReveal { from { opacity:0; transform:translateZ(10px) translateY(15px); letter-spacing:12px; } to { opacity:1; transform:translateZ(10px) translateY(0); letter-spacing:3px; } }
+@keyframes hexRingSpin { from { transform:translate(-50%,-50%) translateZ(-5px) rotate(0deg); } to { transform:translate(-50%,-50%) translateZ(-5px) rotate(360deg); } }
 @keyframes textGlow { 0%,100% { text-shadow: 0 0 8px rgba(124,58,237,0.3); } 50% { text-shadow: 0 0 25px rgba(124,58,237,0.6), 0 0 50px rgba(124,58,237,0.3); } }
 
 /* ===== ENHANCED ELEMENTS ===== */

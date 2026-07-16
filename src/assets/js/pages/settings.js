@@ -13,9 +13,9 @@ class SettingsPage {
         <div class="page-header"><h1>Ustawienia</h1></div>
         <div style="display:flex;gap:24px;">
           <div class="settings-tabs" style="width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:4px;">
-            ${['profile','friends','developer','games','notifications','updates','steam','reports'].map((t,i) => `
+            ${['profile','friends','developer','games','notifications','updates','steam','reports','about'].map((t,i) => `
               <button class="btn settings-tab ${i===0?'btn-primary':'btn-ghost'}" data-tab="${t}" style="text-align:left;justify-content:flex-start;padding:10px 14px;border-radius:8px;">
-                ${t === 'profile' ? '👤 Profil' : t === 'friends' ? '👥 Znajomi' : t === 'developer' ? '🛠 Deweloper' : t === 'games' ? '🎮 Gry' : t === 'notifications' ? '🔔 Powiadomienia' : t === 'updates' ? '🔄 Aktualizacje' : t === 'steam' ? '🟦 Steam' : '📋 Zgłoszenia'}
+                ${t === 'profile' ? '👤 Profil' : t === 'friends' ? '👥 Znajomi' : t === 'developer' ? '🛠 Deweloper' : t === 'games' ? '🎮 Gry' : t === 'notifications' ? '🔔 Powiadomienia' : t === 'updates' ? '🔄 Aktualizacje' : t === 'steam' ? '🟦 Steam' : t === 'reports' ? '📋 Zgłoszenia' : 'ℹ️ O nas'}
               </button>
             `).join('')}
           </div>
@@ -45,6 +45,7 @@ class SettingsPage {
       else if (this.tab === 'updates') this.renderUpdates(el);
       else if (this.tab === 'steam') this.renderSteam(el);
       else if (this.tab === 'reports') this.renderReports(el);
+      else if (this.tab === 'about') this.renderAbout(el);
     } catch { el.innerHTML = '<div class="empty-state"><p>Błąd ładowania ustawień</p></div>'; }
   }
 
@@ -580,6 +581,28 @@ class SettingsPage {
         </div>
       `).join('');
     } catch { el.innerHTML = '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Błąd ładowania zgłoszeń.</p>'; }
+  }
+
+  renderAbout(el) {
+    el.innerHTML = `
+      <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:32px;text-align:center;">
+        <div style="width:80px;height:80px;background:linear-gradient(135deg,#7c3aed,#a855f7,#ec4899);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);margin:0 auto 20px;animation:logoSpin 12s linear infinite;filter:drop-shadow(0 0 40px rgba(124,58,237,0.3));"></div>
+        <h2 style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#fff 20%,#a78bfa 50%,#f472b6 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;">VexCenter</h2>
+        <p style="color:rgba(255,255,255,0.3);font-size:13px;margin-bottom:24px;">v1.6.2 — Gaming Platform</p>
+        <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.1);border-radius:12px;padding:24px;margin-bottom:20px;">
+          <p style="font-size:14px;color:rgba(255,255,255,0.7);margin-bottom:8px;">Stworzone przez</p>
+          <p style="font-size:20px;font-weight:800;background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">VexHack Team</p>
+        </div>
+        <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.1);border-radius:12px;padding:20px;margin-bottom:24px;">
+          <p style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Dołącz do nas na Discordzie!</p>
+          <a href="https://dc.gg/vexhack.py" target="_blank" class="btn btn-primary" style="font-size:15px;padding:14px 32px;text-decoration:none;display:inline-flex;gap:8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.054C1.482 8.336.87 12.185.985 15.976a.076.076 0 0 0 .031.058 19.813 19.813 0 0 0 5.964 3.017.076.076 0 0 0 .082-.027 14.09 14.09 0 0 0 1.22-1.987.074.074 0 0 0-.04-.102 12.97 12.97 0 0 1-1.87-.89.074.074 0 0 1-.017-.118l.327-.256a.074.074 0 0 1 .073-.014c3.928 1.794 8.182 1.794 12.058 0a.074.074 0 0 1 .074.014l.328.256a.074.074 0 0 1-.018.118c-.594.34-1.2.64-1.867.89a.074.074 0 0 0-.04.102c.39.7.79 1.362 1.22 1.987a.076.076 0 0 0 .082.027 19.774 19.774 0 0 0 5.973-3.017.076.076 0 0 0 .03-.058c.13-4.256-.513-8.094-2.412-11.552a.066.066 0 0 0-.032-.054zM8.02 13.33c-.78 0-1.422-.72-1.422-1.597 0-.878.623-1.597 1.422-1.597.798 0 1.422.72 1.422 1.597 0 .878-.624 1.597-1.422 1.597zm7.96 0c-.78 0-1.422-.72-1.422-1.597 0-.878.624-1.597 1.422-1.597.798 0 1.422.72 1.422 1.597 0 .878-.615 1.597-1.422 1.597z"/></svg>
+            Dołącz na Discord
+          </a>
+        </div>
+        <p style="font-size:12px;color:rgba(255,255,255,0.15);">dc.gg/vexhack.py</p>
+      </div>
+    `;
   }
 }
 

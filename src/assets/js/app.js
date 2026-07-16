@@ -76,9 +76,80 @@
     }
 
     if (alreadyLoggedIn) {
-      overlay.style.cssText += 'opacity:0;pointer-events:none;';
+      // Build full startup animation
+      const hexColors = ['#7c3aed','#a855f7','#ec4899','#06b6d4','#8b5cf6','#f472b6','#22d3ee','#c084fc','#e879f9','#2dd4bf','#818cf8','#f9a8d4'];
+
+      // Stars
+      const stars = document.createElement('div');
+      stars.style.cssText = 'position:absolute;inset:0;background-image:' +
+        'radial-gradient(1px 1px at 10% 20%,rgba(255,255,255,0.4),transparent),' +
+        'radial-gradient(1px 1px at 30% 50%,rgba(255,255,255,0.3),transparent),' +
+        'radial-gradient(1.5px 1.5px at 50% 10%,rgba(255,255,255,0.5),transparent),' +
+        'radial-gradient(1px 1px at 70% 30%,rgba(255,255,255,0.2),transparent),' +
+        'radial-gradient(1px 1px at 90% 60%,rgba(255,255,255,0.3),transparent),' +
+        'radial-gradient(1.5px 1.5px at 20% 80%,rgba(255,255,255,0.4),transparent);' +
+        'animation:starTwinkle 4s ease-in-out infinite alternate;';
+      overlay.appendChild(stars);
+
+      // Nebula glows
+      const nebulaHTML = '<div style="position:absolute;width:600px;height:600px;border-radius:50%;filter:blur(150px);opacity:0.06;background:#7c3aed;top:-200px;left:-150px;animation:nebulaDrift 12s ease-in-out infinite alternate;"></div>' +
+        '<div style="position:absolute;width:600px;height:600px;border-radius:50%;filter:blur(150px);opacity:0.06;background:#ec4899;bottom:-200px;right:-150px;animation:nebulaDrift 12s ease-in-out infinite alternate;animation-delay:-4s;"></div>';
+      overlay.insertAdjacentHTML('beforeend', nebulaHTML);
+
+      // 3D floor rings
+      for (let i = 0; i < 3; i++) {
+        const r = document.createElement('div');
+        r.style.cssText = `position:absolute;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%) rotateX(75deg);border:1px solid rgba(124,58,237,0.15);width:${200+i*100}px;height:${200+i*100}px;animation:ringPulse${i+1} 4s ease-out infinite;`;
+        overlay.appendChild(r);
+      }
+
+      // 150 burst particles
+      const burstColors = ['#7c3aed','#a855f7','#ec4899','#06b6d4','#8b5cf6','#f472b6','#22d3ee','#818cf8','#c084fc','#f9a8d4','#e879f9','#2dd4bf'];
+      for (let i = 0; i < 120; i++) {
+        const p = document.createElement('div');
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        const dist = 40 + Math.random() * 350;
+        const tx = Math.sin(phi) * Math.cos(theta) * dist;
+        const ty = Math.sin(phi) * Math.sin(theta) * dist;
+        const tz = Math.cos(phi) * dist * 0.5;
+        const sz = 1 + Math.random() * 4;
+        const col = burstColors[Math.floor(Math.random() * burstColors.length)];
+        p.style.cssText = `position:absolute;border-radius:50%;left:50%;top:50%;opacity:0;will-change:transform,opacity;` +
+          `--tx:${tx}px;--ty:${ty}px;--tz:${tz}px;width:${sz}px;height:${sz}px;background:${col};` +
+          `box-shadow:0 0 ${sz*4}px ${col};filter:blur(${sz>3?'2px':'0.5px'}) brightness(1.5);` +
+          `animation:splashParticle3D ${1+Math.random()*3}s cubic-bezier(0.15,0.8,0.3,1) ${Math.random()*0.6}s forwards;`;
+        overlay.appendChild(p);
+      }
+
+      // Center content
+      overlay.innerHTML += `
+        <div style="text-align:center;position:relative;z-index:10;transform-style:preserve-3d;perspective:1000px;">
+          <div style="position:relative;display:flex;justify-content:center;align-items:center;height:120px;margin:0 auto 24px;animation:centerFloat 5s ease-in-out infinite;">
+            <div style="position:absolute;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,0.12),transparent 70%);animation:glowPulse 3s ease-in-out infinite;"></div>
+            <div style="position:relative;z-index:2;">
+              <div style="width:90px;height:90px;background:linear-gradient(135deg,#7c3aed,#a855f7,#ec4899);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);animation:logoSpin 12s linear infinite;filter:drop-shadow(0 0 80px rgba(124,58,237,0.3)) drop-shadow(0 0 150px rgba(168,85,247,0.15));transform:translateZ(10px);"></div>
+              <div style="position:absolute;width:48px;height:48px;background:#0d0d1a;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);animation:logoSpinReverse 12s linear infinite;inset:0;margin:auto;transform:translateZ(15px);"></div>
+              <div style="position:absolute;width:130px;height:130px;border:1px solid rgba(124,58,237,0.1);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%) translateZ(-5px);animation:hexRingSpin 8s linear infinite;"></div>
+            </div>
+          </div>
+          <h1 style="font-size:42px;font-weight:900;background:linear-gradient(135deg,#fff 15%,#a78bfa 45%,#f472b6 70%,#fff 85%);background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-2px;margin-bottom:4px;opacity:0;animation:titleReveal 1s cubic-bezier(0.16,1,0.3,1) 0.8s forwards;transform:translateZ(30px);">VexCenter</h1>
+          <p style="font-size:12px;color:rgba(255,255,255,0.12);letter-spacing:3px;text-transform:uppercase;font-weight:500;opacity:0;animation:taglineReveal 0.8s ease 1.5s forwards;transform:translateZ(10px);">Gaming Platform</p>
+          <p style="font-size:11px;color:rgba(255,255,255,0.06);margin-top:16px;letter-spacing:1px;opacity:0;animation:fadeIn 1s ease 2.5s forwards;transform:translateZ(5px);">by VexHack Team &bull; <a href="https://dc.gg/vexhack.py" target="_blank" style="color:#7c3aed;text-decoration:none;">dc.gg/vexhack.py</a></p>
+        </div>
+      `;
+
       document.body.appendChild(overlay);
-      setTimeout(() => { overlay.remove(); router.navigate('store'); }, 400);
+
+      // Fade out after 4.5s
+      setTimeout(() => {
+        overlay.style.opacity = '0';
+        overlay.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+          overlay.remove();
+          router.navigate('store');
+        }, 600);
+      }, 4500);
       return;
     }
 
