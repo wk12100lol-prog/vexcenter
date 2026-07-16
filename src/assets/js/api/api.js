@@ -117,6 +117,10 @@ class VexAPI {
   updateUserRole(userId, role) { return this.post(`admin/users/role`, { user_id: userId, role }); }
   getReviewComments(reviewId) { return this.get('review-comments?review_id=' + reviewId); }
   addReviewComment(reviewId, content) { return this.post('review-comments', { review_id: reviewId, content }); }
+  submitReport(data) { return this.post('reports', data); }
+  getMyReports() { return this.get('reports'); }
+  getReports(status) { return this.get('admin/reports' + (status ? '?status='+status : '')); }
+  updateReport(id, status, admin_note) { return this.put('admin/reports', { id, status, admin_note }); }
 }
 
 const api = new VexAPI();

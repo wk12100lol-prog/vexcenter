@@ -27,6 +27,11 @@ const LANG = {
     admin_panel: 'Panel Admina', admin: 'Administracja',
     stats: 'Statystyki', downloads: 'Pobrania', plays: 'Uruchomienia',
     total_plays: 'Liczba uruchomień', users_search: 'Użytkownicy',
+    reports: 'Zgłoszenia', report: 'Zgłoś problem', submit_report: 'Wyślij zgłoszenie',
+    report_title: 'Tytuł', report_desc: 'Opis', report_category: 'Kategoria',
+    bug: 'Błąd', feature: 'Propozycja', other: 'Inne',
+    report_sent: 'Zgłoszenie wysłane', report_status: 'Status zgłoszenia',
+    open: 'Otwarte', in_progress: 'W trakcie', resolved: 'Rozwiązane', closed: 'Zamknięte',
   },
   en: {
     store: 'Store', library: 'Library', profile: 'Profile',
@@ -56,6 +61,11 @@ const LANG = {
     admin_panel: 'Admin Panel', admin: 'Administration',
     stats: 'Stats', downloads: 'Downloads', plays: 'Launches',
     total_plays: 'Total launches', users_search: 'Users',
+    reports: 'Reports', report: 'Report issue', submit_report: 'Submit report',
+    report_title: 'Title', report_desc: 'Description', report_category: 'Category',
+    bug: 'Bug', feature: 'Feature', other: 'Other',
+    report_sent: 'Report sent', report_status: 'Report status',
+    open: 'Open', in_progress: 'In progress', resolved: 'Resolved', closed: 'Closed',
   },
   de: {
     store: 'Shop', library: 'Bibliothek', profile: 'Profil',
@@ -85,6 +95,11 @@ const LANG = {
     admin_panel: 'Admin-Panel', admin: 'Administration',
     stats: 'Statistiken', downloads: 'Downloads', plays: 'Starts',
     total_plays: 'Gesamtstarts', users_search: 'Benutzer',
+    reports: 'Meldungen', report: 'Problem melden', submit_report: 'Meldung senden',
+    report_title: 'Titel', report_desc: 'Beschreibung', report_category: 'Kategorie',
+    bug: 'Fehler', feature: 'Vorschlag', other: 'Sonstiges',
+    report_sent: 'Meldung gesendet', report_status: 'Status',
+    open: 'Offen', in_progress: 'In Bearbeitung', resolved: 'Gelöst', closed: 'Geschlossen',
   }
 };
 

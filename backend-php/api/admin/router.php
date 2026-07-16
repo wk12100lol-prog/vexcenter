@@ -25,6 +25,9 @@ switch ($id) {
     case 'stats':
         require __DIR__ . '/stats.php';
         break;
+    case 'reports':
+        require __DIR__ . '/reports.php';
+        break;
     default:
         Response::error(404, 'Endpoint not found');
 }

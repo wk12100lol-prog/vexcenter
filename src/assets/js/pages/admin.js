@@ -11,7 +11,7 @@ class AdminPage {
         <div class="page-header"><h1>Panel Administracyjny</h1></div>
         <div style="display:flex;gap:24px;">
           <div style="width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:4px;">
-            ${[['dashboard','📊 Dashboard'],['games','🎮 Gry'],['allgames','🎯 Wszystkie gry'],['developers','🛠 Deweloperzy'],['users','👥 Użytkownicy'],['announcements','📢 Ogłoszenia']].map(([t,l],i) =>
+            ${[['dashboard','📊 Dashboard'],['games','🎮 Gry'],['allgames','🎯 Wszystkie gry'],['developers','🛠 Deweloperzy'],['users','👥 Użytkownicy'],['announcements','📢 Ogłoszenia'],['reports','📋 Zgłoszenia']].map(([t,l],i) =>
               `<button class="btn admin-tab ${i===0?'btn-primary':'btn-ghost'}" data-tab="${t}" style="text-align:left;justify-content:flex-start;padding:10px 14px;border-radius:8px;">${l}</button>`
             ).join('')}
           </div>
@@ -37,6 +37,7 @@ class AdminPage {
     else if (this.tab === 'developers') this.renderDevelopers(el);
     else if (this.tab === 'users') this.renderUsers(el);
     else if (this.tab === 'announcements') this.renderAnnouncements(el);
+    else if (this.tab === 'reports') this.renderReports(el);
   }
 
   async renderDashboard(el) {
@@ -223,6 +224,79 @@ class AdminPage {
         this.renderAnnouncements(el);
       });
     } catch { el.innerHTML = '<div class="empty-state"><p>Błąd ładowania</p></div>'; }
+  }
+
+  async renderReports(el) {
+    try {
+      const d = await api.getReports(this._reportFilter || '');
+      const list = d.reports || [];
+      const statusColors = { open: 'rgba(239,68,68,0.15)', in_progress: 'rgba(245,158,11,0.15)', resolved: 'rgba(16,185,129,0.15)', closed: 'rgba(255,255,255,0.08)' };
+      const statusStr = { open: 'Otwarte', in_progress: 'W trakcie', resolved: 'Rozwiązane', closed: 'Zamknięte' };
+      el.innerHTML = `
+        <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:24px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3>Zgłoszenia (${list.length})</h3>
+            <div style="display:flex;gap:6px;">
+              ${['','open','in_progress','resolved','closed'].map(s => `<button class="btn btn-sm ${(!this._reportFilter && !s) || this._reportFilter === s ? 'btn-primary' : 'btn-ghost'}" data-filter="${s}" style="font-size:11px;">${s ? statusStr[s]||s : 'Wszystkie'}</button>`).join('')}
+            </div>
+          </div>
+          ${list.length ? list.map(r => `
+            <div class="report-item" data-id="${r.id}" style="padding:16px;border-bottom:1px solid var(--glass-border);">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div style="flex:1;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                    <strong>${r.title}</strong>
+                    <span style="font-size:11px;padding:2px 10px;border-radius:4px;background:${statusColors[r.status]||statusColors.open};color:${r.status==='resolved'?'var(--green-400)':r.status==='in_progress'?'var(--yellow-400)':r.status==='closed'?'rgba(255,255,255,0.3)':'var(--red-400)'}">${statusStr[r.status]||r.status}</span>
+                  </div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:6px;">${r.username} • ${r.category} • ${r.created_at}</div>
+                  <p style="font-size:13px;color:rgba(255,255,255,0.5);">${r.description}</p>
+                  ${r.admin_note ? '<div style="margin-top:6px;font-size:12px;color:var(--purple-300);">Notatka: '+r.admin_note+'</div>' : ''}
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;margin-left:16px;">
+                  <button class="btn btn-sm ${r.status==='open'?'btn-primary':'btn-ghost'}" data-set-status="${r.id}" data-status="open" style="font-size:10px;padding:3px 8px;">Otwarte</button>
+                  <button class="btn btn-sm ${r.status==='in_progress'?'btn-primary':'btn-ghost'}" data-set-status="${r.id}" data-status="in_progress" style="font-size:10px;padding:3px 8px;">W trakcie</button>
+                  <button class="btn btn-sm ${r.status==='resolved'?'btn-primary':'btn-ghost'}" data-set-status="${r.id}" data-status="resolved" style="font-size:10px;padding:3px 8px;">Rozwiązane</button>
+                  <button class="btn btn-sm ${r.status==='closed'?'btn-primary':'btn-ghost'}" data-set-status="${r.id}" data-status="closed" style="font-size:10px;padding:3px 8px;">Zamknięte</button>
+                </div>
+              </div>
+              <div class="report-note-form" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--glass-border);">
+                <div style="display:flex;gap:8px;">
+                  <input type="text" class="report-note-input" placeholder="Notatka admina..." style="flex:1;padding:8px 12px;border:1px solid var(--glass-border);border-radius:6px;background:rgba(255,255,255,0.04);color:#fff;font-size:13px;font-family:inherit;outline:none;" />
+                  <button class="btn btn-sm btn-primary report-note-save" data-id="${r.id}">Zapisz</button>
+                </div>
+              </div>
+            </div>
+          `).join('') : '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Brak zgłoszeń.</p>'}
+        </div>
+      `;
+
+      el.querySelectorAll('[data-filter]').forEach(b => b.addEventListener('click', async () => {
+        this._reportFilter = b.dataset.filter || '';
+        this.renderReports(el);
+      }));
+
+      el.querySelectorAll('[data-set-status]').forEach(b => b.addEventListener('click', async () => {
+        const reportId = b.dataset.setStatus;
+        const newStatus = b.dataset.status;
+        const noteInput = b.closest('.report-item').querySelector('.report-note-input');
+        const noteForm = b.closest('.report-item').querySelector('.report-note-form');
+        noteForm.style.display = 'flex';
+        noteInput.focus();
+        noteInput.dataset.targetStatus = newStatus;
+        noteInput.dataset.targetId = reportId;
+      }));
+
+      el.querySelectorAll('.report-note-save').forEach(b => b.addEventListener('click', async () => {
+        const reportItem = b.closest('.report-item');
+        const noteInput = reportItem.querySelector('.report-note-input');
+        const note = noteInput.value.trim();
+        const targetId = noteInput.dataset.targetId || b.dataset.id;
+        const targetStatus = noteInput.dataset.targetStatus || 'resolved';
+        await api.updateReport(targetId, targetStatus, note);
+        showModal('Sukces', 'Zgłoszenie zaktualizowane!', 'success');
+        this.renderReports(el);
+      }));
+    } catch { el.innerHTML = '<div class="empty-state"><p>Błąd ładowania zgłoszeń</p></div>'; }
   }
 }
 

@@ -13,9 +13,9 @@ class SettingsPage {
         <div class="page-header"><h1>Ustawienia</h1></div>
         <div style="display:flex;gap:24px;">
           <div class="settings-tabs" style="width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:4px;">
-            ${['profile','friends','developer','games','notifications','updates'].map((t,i) => `
+            ${['profile','friends','developer','games','notifications','updates','reports'].map((t,i) => `
               <button class="btn settings-tab ${i===0?'btn-primary':'btn-ghost'}" data-tab="${t}" style="text-align:left;justify-content:flex-start;padding:10px 14px;border-radius:8px;">
-                ${t === 'profile' ? '👤 Profil' : t === 'friends' ? '👥 Znajomi' : t === 'developer' ? '🛠 Deweloper' : t === 'games' ? '🎮 Gry' : t === 'notifications' ? '🔔 Powiadomienia' : '🔄 Aktualizacje'}
+                ${t === 'profile' ? '👤 Profil' : t === 'friends' ? '👥 Znajomi' : t === 'developer' ? '🛠 Deweloper' : t === 'games' ? '🎮 Gry' : t === 'notifications' ? '🔔 Powiadomienia' : t === 'updates' ? '🔄 Aktualizacje' : '📋 Zgłoszenia'}
               </button>
             `).join('')}
           </div>
@@ -43,6 +43,7 @@ class SettingsPage {
       else if (this.tab === 'games') this.renderGames(el, data);
       else if (this.tab === 'notifications') this.renderNotifications(el);
       else if (this.tab === 'updates') this.renderUpdates(el);
+      else if (this.tab === 'reports') this.renderReports(el);
     } catch { el.innerHTML = '<div class="empty-state"><p>Błąd ładowania ustawień</p></div>'; }
   }
 
@@ -402,6 +403,72 @@ class SettingsPage {
       bg.style.background = this.checked ? '#7c3aed' : 'rgba(255,255,255,0.15)';
       dot.style.left = this.checked ? '22px' : '2px';
     });
+  }
+
+  async renderReports(el) {
+    el.innerHTML = `
+      <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:24px;margin-bottom:16px;">
+        <h3 style="margin-bottom:4px;">Zgłoś problem</h3>
+        <p style="color:rgba(255,255,255,0.3);font-size:13px;margin-bottom:20px;">Masz problem? Chcesz zaproponować nową funkcję? Daj nam znać!</p>
+        <form id="report-form">
+          <div class="form-group"><label>Tytuł</label><input type="text" id="report-title" required placeholder="Krótki tytuł zgłoszenia" /></div>
+          <div class="form-group"><label>Kategoria</label>
+            <select id="report-category" style="width:100%;padding:10px 12px;border:1px solid var(--glass-border);border-radius:8px;background:rgba(255,255,255,0.04);color:#fff;font-size:14px;font-family:inherit;outline:none;">
+              <option value="bug">Błąd</option>
+              <option value="feature">Propozycja</option>
+              <option value="other">Inne</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Opis</label><textarea id="report-desc" rows="4" required placeholder="Szczegółowy opis..."></textarea></div>
+          <button class="btn btn-primary" type="submit">Wyślij zgłoszenie</button>
+        </form>
+      </div>
+      <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:24px;">
+        <h3 style="margin-bottom:16px;">Twoje zgłoszenia</h3>
+        <div id="my-reports-list"></div>
+      </div>
+    `;
+
+    document.getElementById('report-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        title: document.getElementById('report-title').value.trim(),
+        category: document.getElementById('report-category').value,
+        description: document.getElementById('report-desc').value.trim(),
+      };
+      if (!data.title || !data.description) return;
+      try {
+        await api.submitReport(data);
+        showModal('Sukces', 'Zgłoszenie wysłane!', 'success');
+        document.getElementById('report-form').reset();
+        this.loadReportsList();
+      } catch (err) { showModal('Błąd', err.message, 'error'); }
+    });
+
+    this.loadReportsList();
+  }
+
+  async loadReportsList() {
+    const el = document.getElementById('my-reports-list');
+    if (!el) return;
+    try {
+      const d = await api.getMyReports();
+      const list = d.reports || [];
+      if (!list.length) { el.innerHTML = '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Brak zgłoszeń.</p>'; return; }
+      const statusColors = { open: 'rgba(239,68,68,0.15)', in_progress: 'rgba(245,158,11,0.15)', resolved: 'rgba(16,185,129,0.15)', closed: 'rgba(255,255,255,0.08)' };
+      const statusText = { open: 'Otwarte', in_progress: 'W trakcie', resolved: 'Rozwiązane', closed: 'Zamknięte' };
+      el.innerHTML = list.map(r => `
+        <div style="padding:14px;border-bottom:1px solid var(--glass-border);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <strong style="font-size:14px;">${r.title}</strong>
+            <span style="font-size:11px;padding:2px 10px;border-radius:4px;background:${statusColors[r.status]||statusColors.open};color:${r.status==='resolved'?'var(--green-400)':r.status==='in_progress'?'var(--yellow-400)':r.status==='closed'?'rgba(255,255,255,0.3)':'var(--red-400)'}">${statusText[r.status]||r.status}</span>
+          </div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:4px;">${r.category} • ${r.created_at}</div>
+          <p style="font-size:13px;color:rgba(255,255,255,0.5);">${r.description}</p>
+          ${r.admin_note ? '<div style="margin-top:8px;padding:8px 12px;background:rgba(124,58,237,0.08);border-radius:6px;font-size:12px;color:var(--purple-300);">Odpowiedź admina: '+r.admin_note+'</div>' : ''}
+        </div>
+      `).join('');
+    } catch { el.innerHTML = '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Błąd ładowania zgłoszeń.</p>'; }
   }
 }
 
