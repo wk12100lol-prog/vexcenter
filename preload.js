@@ -36,6 +36,6 @@ contextBridge.exposeInMainWorld('VexCenter', {
     openExternal: (url) => ipcRenderer.invoke('shell:open-external', url),
   },
   onDownloadProgress: (cb) => ipcRenderer.on('download:progress', (_, pct) => cb(pct)),
-  appVersion: '1.6.2',
+  appVersion: '1.6.3',
   platform: process.platform,
 });

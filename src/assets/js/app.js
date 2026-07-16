@@ -76,7 +76,6 @@
     }
 
     if (alreadyLoggedIn) {
-      // Build full startup animation
       const hexColors = ['#7c3aed','#a855f7','#ec4899','#06b6d4','#8b5cf6','#f472b6','#22d3ee','#c084fc','#e879f9','#2dd4bf','#818cf8','#f9a8d4'];
 
       // Stars
@@ -96,14 +95,7 @@
         '<div style="position:absolute;width:600px;height:600px;border-radius:50%;filter:blur(150px);opacity:0.06;background:#ec4899;bottom:-200px;right:-150px;animation:nebulaDrift 12s ease-in-out infinite alternate;animation-delay:-4s;"></div>';
       overlay.insertAdjacentHTML('beforeend', nebulaHTML);
 
-      // 3D floor rings
-      for (let i = 0; i < 3; i++) {
-        const r = document.createElement('div');
-        r.style.cssText = `position:absolute;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%) rotateX(75deg);border:1px solid rgba(124,58,237,0.15);width:${200+i*100}px;height:${200+i*100}px;animation:ringPulse${i+1} 4s ease-out infinite;`;
-        overlay.appendChild(r);
-      }
-
-      // 150 burst particles
+      // 120 burst particles
       const burstColors = ['#7c3aed','#a855f7','#ec4899','#06b6d4','#8b5cf6','#f472b6','#22d3ee','#818cf8','#c084fc','#f9a8d4','#e879f9','#2dd4bf'];
       for (let i = 0; i < 120; i++) {
         const p = document.createElement('div');
@@ -135,21 +127,21 @@
           </div>
           <h1 style="font-size:42px;font-weight:900;background:linear-gradient(135deg,#fff 15%,#a78bfa 45%,#f472b6 70%,#fff 85%);background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-2px;margin-bottom:4px;opacity:0;animation:titleReveal 1s cubic-bezier(0.16,1,0.3,1) 0.8s forwards;transform:translateZ(30px);">VexCenter</h1>
           <p style="font-size:12px;color:rgba(255,255,255,0.12);letter-spacing:3px;text-transform:uppercase;font-weight:500;opacity:0;animation:taglineReveal 0.8s ease 1.5s forwards;transform:translateZ(10px);">Gaming Platform</p>
-          <p style="font-size:11px;color:rgba(255,255,255,0.06);margin-top:16px;letter-spacing:1px;opacity:0;animation:fadeIn 1s ease 2.5s forwards;transform:translateZ(5px);">by VexHack Team &bull; <a href="https://dc.gg/vexhack.py" target="_blank" style="color:#7c3aed;text-decoration:none;">dc.gg/vexhack.py</a></p>
+          <div style="position:fixed;bottom:32px;left:0;right:0;text-align:center;z-index:20;opacity:0;animation:fadeIn 1s ease 2.5s forwards;">
+            <p style="font-size:11px;color:rgba(255,255,255,0.1);letter-spacing:1px;">by VexHack Team &bull; <a href="https://dc.gg/vexhack.py" target="_blank" style="color:#7c3aed;text-decoration:none;">dc.gg/vexhack.py</a></p>
+          </div>
         </div>
       `;
 
       document.body.appendChild(overlay);
 
-      // Fade out after 4.5s
-      setTimeout(() => {
+      window.__dismissSplash = () => {
         overlay.style.opacity = '0';
         overlay.style.transform = 'scale(1.05)';
         setTimeout(() => {
           overlay.remove();
-          router.navigate('store');
         }, 600);
-      }, 4500);
+      };
       return;
     }
 
@@ -334,6 +326,11 @@
     applyFontSettings();
     const savedTheme = localStorage.getItem('vex_theme');
     if (savedTheme === 'light') document.documentElement.classList.add('theme-light');
+
+    // Show splash immediately for logged-in users; load everything in background
+    const isLoggedIn = !!api.token;
+    if (isLoggedIn) createSplash(true);
+
     createBackground();
     initTitlebar();
     headerComponent.render();
@@ -344,26 +341,34 @@
     });
     registerRoutes();
 
-    // hide logo splash
     const splash = document.getElementById('splash');
     if (splash) splash.classList.add('hidden');
 
     router.init();
 
-    if (api.token) {
+    if (isLoggedIn) {
       try {
         const restored = await api.restoreSession();
         if (restored) {
           headerComponent.updateUser(api.user);
-          createSplash(true);
           initAutoUpdateListeners();
+          if (window.__dismissSplash) {
+            window.__dismissSplash();
+            setTimeout(() => (window.__dismissSplash = null), 1000);
+          }
+          router.navigate('store');
           return;
         }
       } catch (e) {
         console.error('[Init] restoreSession failed:', e);
       }
+      // Fallback: if restoreSession fails, still dismiss splash
+      if (window.__dismissSplash) {
+        window.__dismissSplash();
+        setTimeout(() => (window.__dismissSplash = null), 1000);
+      }
     }
-    createSplash(false);
+    if (!isLoggedIn) createSplash(false);
     initAutoUpdateListeners();
   }
 
