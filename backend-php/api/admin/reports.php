@@ -45,6 +45,13 @@ if ($method === 'get') {
         "UPDATE reports SET status = ?, admin_note = ? WHERE id = ?",
         [$newStatus, $adminNote, $reportId]
     );
+    $report = Database::fetch("SELECT user_id, title FROM reports WHERE id = ?", [$reportId]);
+    if ($report) {
+        $statusLabels = ['open'=>'Otwarte','in_progress'=>'W trakcie','resolved'=>'Rozwiązane','closed'=>'Zamknięte'];
+        $dbMsg = 'Status zgłoszenia "' . $report['title'] . '" zmieniony na ' . ($statusLabels[$newStatus]??$newStatus);
+        if ($adminNote) $dbMsg .= '. Odpowiedź admina: ' . $adminNote;
+        Database::insert("INSERT INTO notifications (user_id, type, message) VALUES (?, 'report_update', ?)", [$report['user_id'], $dbMsg]);
+    }
     Response::success(null, 'Report updated');
 } else {
     Response::error(405, 'Method not allowed');

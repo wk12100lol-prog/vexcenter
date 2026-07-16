@@ -13,9 +13,9 @@ class SettingsPage {
         <div class="page-header"><h1>Ustawienia</h1></div>
         <div style="display:flex;gap:24px;">
           <div class="settings-tabs" style="width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:4px;">
-            ${['profile','friends','developer','games','notifications','updates','reports'].map((t,i) => `
+            ${['profile','friends','developer','games','notifications','updates','steam','reports'].map((t,i) => `
               <button class="btn settings-tab ${i===0?'btn-primary':'btn-ghost'}" data-tab="${t}" style="text-align:left;justify-content:flex-start;padding:10px 14px;border-radius:8px;">
-                ${t === 'profile' ? '👤 Profil' : t === 'friends' ? '👥 Znajomi' : t === 'developer' ? '🛠 Deweloper' : t === 'games' ? '🎮 Gry' : t === 'notifications' ? '🔔 Powiadomienia' : t === 'updates' ? '🔄 Aktualizacje' : '📋 Zgłoszenia'}
+                ${t === 'profile' ? '👤 Profil' : t === 'friends' ? '👥 Znajomi' : t === 'developer' ? '🛠 Deweloper' : t === 'games' ? '🎮 Gry' : t === 'notifications' ? '🔔 Powiadomienia' : t === 'updates' ? '🔄 Aktualizacje' : t === 'steam' ? '🟦 Steam' : '📋 Zgłoszenia'}
               </button>
             `).join('')}
           </div>
@@ -43,6 +43,7 @@ class SettingsPage {
       else if (this.tab === 'games') this.renderGames(el, data);
       else if (this.tab === 'notifications') this.renderNotifications(el);
       else if (this.tab === 'updates') this.renderUpdates(el);
+      else if (this.tab === 'steam') this.renderSteam(el);
       else if (this.tab === 'reports') this.renderReports(el);
     } catch { el.innerHTML = '<div class="empty-state"><p>Błąd ładowania ustawień</p></div>'; }
   }
@@ -454,6 +455,65 @@ class SettingsPage {
     const sizeMap = { small: '13px', medium: '14px', large: '16px', xlarge: '18px' };
     document.documentElement.style.setProperty('--app-font', fontMap[font] || 'var(--font)');
     document.documentElement.style.setProperty('--app-fs-base', sizeMap[size] || '14px');
+  }
+
+  renderSteam(el) {
+    el.innerHTML = `
+      <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:24px;margin-bottom:16px;">
+        <h3 style="margin-bottom:4px;">Importuj gry z Steam</h3>
+        <p style="color:rgba(255,255,255,0.3);font-size:13px;margin-bottom:20px;">Przeskanuj swój komputer w poszukiwaniu zainstalowanych gier Steam i dodaj je do biblioteki VexCenter.</p>
+        <button class="btn btn-primary" id="steam-scan-btn">🔍 Skanuj Steam</button>
+        <div id="steam-results" style="margin-top:16px;"></div>
+      </div>
+    `;
+
+    const resultsDiv = document.getElementById('steam-results');
+    document.getElementById('steam-scan-btn').addEventListener('click', async () => {
+      if (!window.VexCenter?.steam) {
+        resultsDiv.innerHTML = '<p style="color:rgba(255,255,255,0.3);padding:12px;">Funkcja dostępna tylko w aplikacji VexCenter (nie w przeglądarce).</p>';
+        return;
+      }
+      resultsDiv.innerHTML = '<p style="color:rgba(255,255,255,0.3);padding:12px;">Skanowanie...</p>';
+      try {
+        const data = await window.VexCenter.steam.scan();
+        const games = data.games || [];
+        if (!games.length) {
+          resultsDiv.innerHTML = '<p style="color:rgba(255,255,255,0.3);padding:12px;">Nie znaleziono żadnych gier Steam na tym komputerze.</p>';
+          return;
+        }
+        let html = '<div style="max-height:400px;overflow-y:auto;border:1px solid var(--glass-border);border-radius:8px;">';
+        html += games.map((g, i) => `
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--glass-border);">
+            <input type="checkbox" checked id="steam-game-${i}" style="width:16px;height:16px;accent-color:#7c3aed;" />
+            <div style="flex:1;font-size:13px;">${g.title}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.3);">ID: ${g.steam_id}</div>
+          </div>
+        `).join('');
+        html += '</div>';
+        html += `<button class="btn btn-primary" id="steam-import-btn" style="margin-top:12px;">📥 Importuj zaznaczone (${games.length})</button>`;
+        resultsDiv.innerHTML = html;
+
+        document.getElementById('steam-import-btn').addEventListener('click', async () => {
+          const selected = [];
+          document.querySelectorAll('[id^="steam-game-"]:checked').forEach(cb => {
+            const idx = parseInt(cb.id.replace('steam-game-', ''));
+            selected.push(games[idx]);
+          });
+          if (!selected.length) { showModal('Info', 'Nie zaznaczono żadnych gier', 'info'); return; }
+          document.getElementById('steam-import-btn').disabled = true;
+          document.getElementById('steam-import-btn').textContent = 'Importowanie...';
+          try {
+            const res = await api.steamImport(selected);
+            showModal('Sukces', 'Zaimportowano ' + res.added + ' gier!', 'success');
+            resultsDiv.innerHTML = '<p style="color:rgba(255,255,255,0.3);padding:12px;">Import zakończony. Zaimportowano ' + res.added + ' gier.</p>';
+          } catch (err) { showModal('Błąd', err.message, 'error');
+            document.getElementById('steam-import-btn').disabled = false;
+            document.getElementById('steam-import-btn').textContent = '📥 Importuj zaznaczone'; }
+        });
+      } catch (err) {
+        resultsDiv.innerHTML = '<p style="color:#ef4444;padding:12px;">Błąd skanowania: ' + err.message + '</p>';
+      }
+    });
   }
 
   async renderReports(el) {

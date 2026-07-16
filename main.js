@@ -120,6 +120,81 @@ ipcMain.handle('game:select-install-path', async () => { const r = await dialog.
 ipcMain.handle('game:select-executable', async () => { const r = await dialog.showOpenDialog(mainWindow, {properties:['openFile'], filters:[{name:'Wykonywalne', extensions:['exe','bat','cmd','lnk']},{name:'Wszystkie', extensions:['*']}]}); return r.canceled ? {canceled:true} : {path: r.filePaths[0]}; });
 ipcMain.handle('shell:open-external', async (_, url) => { if (url.startsWith('http')) shell.openExternal(url); });
 
+/* === STEAM SCAN === */
+ipcMain.handle('steam:scan', async () => {
+  const results = [];
+  const commonPaths = [
+    'C:\\Program Files (x86)\\Steam',
+    'C:\\Program Files\\Steam',
+  ];
+  const scanned = new Set();
+
+  for (const basePath of commonPaths) {
+    const steamApps = path.join(basePath, 'steamapps');
+    if (!fs.existsSync(steamApps)) continue;
+
+    // Read libraryfolders.vdf for additional libraries
+    const lfPath = path.join(steamApps, 'libraryfolders.vdf');
+    const extraLibs = [];
+    if (fs.existsSync(lfPath)) {
+      const vdf = fs.readFileSync(lfPath, 'utf8');
+      const matches = vdf.match(/"path"\s+"([^"]+)"/g);
+      if (matches) {
+        matches.forEach(m => {
+          const p = m.match(/"path"\s+"([^"]+)"/)?.[1];
+          if (p && p !== basePath) extraLibs.push(p);
+        });
+      }
+    }
+
+    const allLibs = [basePath, ...extraLibs];
+    for (const lib of allLibs) {
+      const libSteamApps = path.join(lib, 'steamapps');
+      if (!fs.existsSync(libSteamApps) || scanned.has(libSteamApps)) continue;
+      scanned.add(libSteamApps);
+
+      const commonDir = path.join(libSteamApps, 'common');
+
+      // Read ACF files
+      let files;
+      try { files = fs.readdirSync(libSteamApps); } catch { continue; }
+
+      for (const file of files) {
+        if (!file.startsWith('appmanifest_') || !file.endsWith('.acf')) continue;
+        const acfPath = path.join(libSteamApps, file);
+        try {
+          const acf = fs.readFileSync(acfPath, 'utf8');
+          const appid = file.match(/appmanifest_(\d+)\.acf/)?.[1];
+          const name = acf.match(/"name"\s+"([^"]+)"/)?.[1];
+          const installdir = acf.match(/"installdir"\s+"([^"]+)"/)?.[1];
+          if (!name || !appid) continue;
+
+          let exePath = '';
+          if (installdir) {
+            const gameDir = path.join(commonDir, installdir);
+            if (fs.existsSync(gameDir)) {
+              // Look for .exe files
+              try {
+                const gameFiles = fs.readdirSync(gameDir);
+                const exeFiles = gameFiles.filter(f => f.toLowerCase().endsWith('.exe') && !f.toLowerCase().includes('unins'));
+                if (exeFiles.length > 0) {
+                  // Prefer the one matching the game name, else first exe
+                  const best = exeFiles.find(f => f.toLowerCase().includes(name.toLowerCase())) || exeFiles[0];
+                  exePath = path.join(gameDir, best);
+                }
+              } catch {}
+            }
+          }
+
+          results.push({ steam_id: parseInt(appid), title: name, exe: exePath });
+        } catch {}
+      }
+    }
+  }
+
+  return { games: results };
+});
+
 ipcMain.handle('game:download', async (event, url, destDir) => {
   try {
     if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });

@@ -24,6 +24,10 @@ switch ($id) {
         if ($method === 'get') require __DIR__ . '/public-profile-reviews.php';
         else Response::error(405, 'Method not allowed');
         break;
+    case 'steam-import':
+        if ($method === 'post') require __DIR__ . '/steam_import.php';
+        else Response::error(405, 'Method not allowed');
+        break;
     default:
         Response::error(404, 'User endpoint not found');
 }

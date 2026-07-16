@@ -121,6 +121,7 @@ class VexAPI {
   getMyReports() { return this.get('reports'); }
   getReports(status) { return this.get('admin/reports' + (status ? '?status='+status : '')); }
   updateReport(id, status, admin_note) { return this.put('admin/reports', { id, status, admin_note }); }
+  steamImport(games) { return this.post('user/steam-import', { games }); }
 }
 
 const api = new VexAPI();

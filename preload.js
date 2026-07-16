@@ -29,6 +29,9 @@ contextBridge.exposeInMainWorld('VexCenter', {
     onDownloaded: (cb) => ipcRenderer.on('update:downloaded', () => cb()),
     onError: (cb) => ipcRenderer.on('update:error', (_, msg) => cb(msg)),
   },
+  steam: {
+    scan: () => ipcRenderer.invoke('steam:scan'),
+  },
   shell: {
     openExternal: (url) => ipcRenderer.invoke('shell:open-external', url),
   },

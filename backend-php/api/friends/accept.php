@@ -6,4 +6,5 @@ $req = Database::fetch("SELECT id FROM friends WHERE user_id = ? AND friend_id =
 if (!$req) Response::error(404, 'No pending request');
 Database::execute("UPDATE friends SET status = 'accepted' WHERE id = ?", [$req['id']]);
 Database::insert("INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, 'accepted')", [$user['id'], $friendId]);
+Database::insert("INSERT INTO notifications (user_id, type, message) VALUES (?, 'friend_accepted', ?)", [$friendId, $user['username'] . ' zaakceptował Twoje zaproszenie']);
 Response::success(null, 'Friend request accepted');

@@ -6,7 +6,7 @@ $content = trim($input['content'] ?? '');
 
 if ($rating < 1 || $rating > 5) Response::error(400, 'Rating must be between 1 and 5');
 
-$game = Database::fetch("SELECT id FROM games WHERE id = ? AND status = 'approved'", [$id]);
+$game = Database::fetch("SELECT id, user_id, title FROM games WHERE id = ? AND status = 'approved'", [$id]);
 if (!$game) Response::error(404, 'Game not found');
 
 $existing = Database::fetch("SELECT id FROM reviews WHERE user_id = ? AND game_id = ?", [$user['id'], $id]);
@@ -22,5 +22,11 @@ Database::execute(
     "UPDATE games g SET g.rating = (SELECT AVG(rating) FROM reviews WHERE game_id = ?) WHERE g.id = ?",
     [$id, $id]
 );
+
+// Notify game owner if not self-review
+if ($game['user_id'] !== $user['id']) {
+    Database::insert("INSERT INTO notifications (user_id, type, message) VALUES (?, 'review', ?)",
+        [$game['user_id'], $user['username'] . ' dodał recenzję gry "' . $game['title'] . '" (' . $rating . '/5)']);
+}
 
 Response::success(null, 'Review submitted');
