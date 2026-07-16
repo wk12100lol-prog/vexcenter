@@ -42,8 +42,8 @@ html, body {
 }
 
 body {
-  font-family: var(--font);
-  font-size: var(--fs-base);
+  font-family: var(--app-font);
+  font-size: var(--app-fs-base);
   color: rgba(255,255,255,0.85);
   -webkit-font-smoothing: antialiased;
   user-select: none;
@@ -1336,6 +1336,57 @@ vc-game-card {
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes scaleIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+@keyframes splashParticle { 0% { opacity:0; transform:translate(-50%,-50%); } 30% { opacity:0.8; } 100% { opacity:0; transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty))); } }
+@keyframes splashReveal { from { opacity:0; transform:translateY(40px) scale(0.95); filter:blur(8px); } to { opacity:1; transform:translateY(0) scale(1); filter:blur(0); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideLeft { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideRight { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes glowPulse { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.05); } }
+@keyframes rotate3d { from { transform: perspective(800px) rotateY(0deg); } to { transform: perspective(800px) rotateY(360deg); } }
+@keyframes heartbeat { 0%,100% { transform: scale(1); } 14% { transform: scale(1.15); } 28% { transform: scale(1); } 42% { transform: scale(1.1); } 70% { transform: scale(1); } }
+@keyframes morph { 0%,100% { border-radius: 60% 40% 30% 70%/60% 30% 70% 40%; } 25% { border-radius: 30% 60% 70% 40%/50% 60% 30% 60%; } 50% { border-radius: 50% 60% 30% 60%/40% 50% 60% 50%; } 75% { border-radius: 60% 40% 50% 40%/30% 60% 40% 70%; } }
+@keyframes ripple { to { transform: scale(4); opacity: 0; } }
+@keyframes textGlow { 0%,100% { text-shadow: 0 0 8px rgba(124,58,237,0.3); } 50% { text-shadow: 0 0 25px rgba(124,58,237,0.6), 0 0 50px rgba(124,58,237,0.3); } }
+
+/* ===== ENHANCED ELEMENTS ===== */
+.btn { position: relative; overflow: hidden; }
+.btn::after { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0.1); opacity: 0; transition: opacity var(--t-fast); }
+.btn:active::after { opacity: 1; }
+.btn-primary::after { background: rgba(255,255,255,0.15); }
+
+.game-card { position: relative; }
+.game-card::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; background: var(--gradient-accent); opacity: 0; transition: opacity var(--t-normal); z-index: -1; }
+.game-card:hover::before { opacity: 0.15; }
+
+.game-card .game-card-img img { transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.game-card:hover .game-card-img img { transform: scale(1.1); }
+
+/* settings tab hover */
+.settings-tab, .admin-tab { transition: all var(--t-spring) !important; }
+
+/* Modal animations */
+#vex-modal > div { animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Progress bar animations */
+#dl-bar-fill, #update-progress-fill { background-size: 200% 100%; animation: shimmer 2s linear infinite; }
+
+/* Staggered card animations */
+.game-grid > * { animation: slideUp 0.5s ease both; }
+.game-grid > *:nth-child(1) { animation-delay: 0.02s; }
+.game-grid > *:nth-child(2) { animation-delay: 0.06s; }
+.game-grid > *:nth-child(3) { animation-delay: 0.10s; }
+.game-grid > *:nth-child(4) { animation-delay: 0.14s; }
+.game-grid > *:nth-child(5) { animation-delay: 0.18s; }
+.game-grid > *:nth-child(6) { animation-delay: 0.22s; }
+.game-grid > *:nth-child(7) { animation-delay: 0.26s; }
+.game-grid > *:nth-child(8) { animation-delay: 0.30s; }
+.game-grid > *:nth-child(9) { animation-delay: 0.34s; }
+.game-grid > *:nth-child(10) { animation-delay: 0.38s; }
+.game-grid > *:nth-child(11) { animation-delay: 0.42s; }
+.game-grid > *:nth-child(12) { animation-delay: 0.46s; }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 900px) {

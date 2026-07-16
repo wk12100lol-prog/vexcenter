@@ -81,8 +81,8 @@ class SettingsPage {
           <div style="flex:1;min-width:160px;">
             <label style="font-size:13px;color:rgba(255,255,255,0.5);display:block;margin-bottom:6px;">Motyw</label>
             <div style="display:flex;gap:8px;">
-              <button class="btn btn-sm ${document.documentElement.classList.contains('theme-light')?'btn-primary':'btn-secondary'}" id="theme-dark-btn">Ciemny</button>
-              <button class="btn btn-sm ${document.documentElement.classList.contains('theme-light')?'btn-secondary':'btn-primary'}" id="theme-light-btn">Jasny</button>
+              <button class="btn btn-sm ${document.documentElement.classList.contains('theme-light')?'btn-secondary':'btn-primary'}" id="theme-dark-btn">Ciemny</button>
+              <button class="btn btn-sm ${document.documentElement.classList.contains('theme-light')?'btn-primary':'btn-secondary'}" id="theme-light-btn">Jasny</button>
             </div>
           </div>
           <div style="flex:1;min-width:160px;">
@@ -91,6 +91,22 @@ class SettingsPage {
               <button class="btn btn-sm ${(localStorage.getItem('vex_lang')||'pl')==='pl'?'btn-primary':'btn-secondary'}" id="lang-pl-btn">PL</button>
               <button class="btn btn-sm ${(localStorage.getItem('vex_lang')||'pl')==='en'?'btn-primary':'btn-secondary'}" id="lang-en-btn">EN</button>
               <button class="btn btn-sm ${(localStorage.getItem('vex_lang')||'pl')==='de'?'btn-primary':'btn-secondary'}" id="lang-de-btn">DE</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--glass-border);">
+          <div style="flex:1;min-width:160px;">
+            <label style="font-size:13px;color:rgba(255,255,255,0.5);display:block;margin-bottom:6px;">Krój czcionki</label>
+            <select id="font-family-select" style="width:100%;padding:8px 12px;border:1px solid var(--glass-border);border-radius:8px;background:rgba(255,255,255,0.04);color:#fff;font-size:13px;font-family:inherit;outline:none;cursor:pointer;">
+              ${['Inter','System','Monospace','Serif'].map(f => `<option value="${f.toLowerCase()}" ${(localStorage.getItem('vex_font')||'inter')===f.toLowerCase()?'selected':''}>${f}</option>`).join('')}
+            </select>
+          </div>
+          <div style="flex:1;min-width:160px;">
+            <label style="font-size:13px;color:rgba(255,255,255,0.5);display:block;margin-bottom:6px;">Rozmiar czcionki</label>
+            <div style="display:flex;gap:6px;">
+              ${[['small','S'],['medium','M'],['large','L'],['xlarge','XL']].map(([v,l]) => `
+                <button class="btn btn-sm ${(localStorage.getItem('vex_font_size')||'medium')===v?'btn-primary':'btn-secondary'}" data-font-size="${v}" style="flex:1;font-size:11px;padding:6px 4px;">${l}</button>
+              `).join('')}
             </div>
           </div>
         </div>
@@ -403,6 +419,30 @@ class SettingsPage {
       bg.style.background = this.checked ? '#7c3aed' : 'rgba(255,255,255,0.15)';
       dot.style.left = this.checked ? '22px' : '2px';
     });
+
+    document.getElementById('font-family-select')?.addEventListener('change', function() {
+      localStorage.setItem('vex_font', this.value);
+      applyFontSettings();
+    });
+    document.querySelectorAll('[data-font-size]').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('[data-font-size]').forEach(b => {
+          b.className = b.className.replace('btn-primary', 'btn-secondary');
+        });
+        this.className = this.className.replace('btn-secondary', 'btn-primary');
+        localStorage.setItem('vex_font_size', this.dataset.fontSize);
+        applyFontSettings();
+      });
+    });
+  }
+
+  function applyFontSettings() {
+    const font = localStorage.getItem('vex_font') || 'inter';
+    const size = localStorage.getItem('vex_font_size') || 'medium';
+    const fontMap = { inter: 'var(--font)', system: 'var(--font-system)', monospace: 'var(--font-mono)', serif: 'var(--font-serif)' };
+    const sizeMap = { small: '13px', medium: '14px', large: '16px', xlarge: '18px' };
+    document.documentElement.style.setProperty('--app-font', fontMap[font] || 'var(--font)');
+    document.documentElement.style.setProperty('--app-fs-base', sizeMap[size] || '14px');
   }
 
   async renderReports(el) {

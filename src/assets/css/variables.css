@@ -41,7 +41,12 @@
   --radius-lg: 18px;
   --radius-xl: 24px;
 
-  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+  --font-serif: 'Merriweather', 'Georgia', serif;
+  --font-system: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --app-font: var(--font);
+  --app-fs-base: var(--fs-base);
   --fs-xxs: 10px;
   --fs-xs: 12px;
   --fs-sm: 13px;

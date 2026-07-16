@@ -48,26 +48,49 @@
     overlay.id = 'splash-overlay';
     overlay.style.cssText = `
       position:fixed;inset:0;z-index:9999;
-      background:var(--black);
+      background:radial-gradient(ellipse at 50% 50%,#0d0d1a 0%,#000 100%);
       display:flex;align-items:center;justify-content:center;
-      transition:opacity 0.5s ease, transform 0.5s ease;
+      transition:opacity 0.6s cubic-bezier(0.4,0,0.2,1), transform 0.6s cubic-bezier(0.4,0,0.2,1);
     `;
+
+    // Particle burst
+    const colors = ['#7c3aed','#a855f7','#ec4899','#06b6d4','#8b5cf6','#f472b6','#22d3ee','#818cf8'];
+    for (let i = 0; i < 80; i++) {
+      const p = document.createElement('div');
+      const angle = Math.random() * 360;
+      const dist = 80 + Math.random() * 250;
+      const px = Math.cos(angle * Math.PI / 180) * dist;
+      const py = Math.sin(angle * Math.PI / 180) * dist;
+      const sz = 1.5 + Math.random() * 3;
+      const dur = 1.5 + Math.random() * 3;
+      p.style.cssText = `
+        position:absolute;width:${sz}px;height:${sz}px;border-radius:50%;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        left:50%;top:50%;
+        opacity:0;
+        animation: splashParticle ${dur}s cubic-bezier(0.2,0.8,0.2,1) ${0.3 + Math.random()*0.5}s forwards;
+        --tx:${px}px;--ty:${py}px;
+        filter:blur(${sz > 2 ? '2px' : '0.5px'}) brightness(1.3);
+      `;
+      overlay.appendChild(p);
+    }
+
     if (alreadyLoggedIn) {
       overlay.style.cssText += 'opacity:0;pointer-events:none;';
       document.body.appendChild(overlay);
-      setTimeout(() => { overlay.remove(); router.navigate('store'); }, 300);
+      setTimeout(() => { overlay.remove(); router.navigate('store'); }, 400);
       return;
     }
 
-    const isLogin = true;
-    overlay.innerHTML = `
-      <div style="text-align:center;animation:fadeIn 0.8s ease;max-width:400px;width:100%;padding:20px;">
-        <div style="position:relative;display:flex;justify-content:center;align-items:center;height:80px;margin-bottom:16px;">
-          <div style="width:64px;height:64px;background:linear-gradient(135deg,#7c3aed,#a855f7,#ec4899);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);animation:logoSpin 20s linear infinite;filter:drop-shadow(0 0 40px rgba(124,58,237,0.3));"></div>
-          <div style="position:absolute;width:34px;height:34px;background:var(--black);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);animation:logoSpinReverse 20s linear infinite;"></div>
+    overlay.innerHTML += `
+      <div style="text-align:center;animation:splashReveal 1.2s cubic-bezier(0.16,1,0.3,1) 0.3s both;max-width:420px;width:100%;padding:20px;">
+        <div style="position:relative;display:flex;justify-content:center;align-items:center;height:90px;margin-bottom:20px;">
+          <div style="position:absolute;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,0.15),transparent 70%);animation:glowPulse 3s ease-in-out infinite;"></div>
+          <div style="width:72px;height:72px;background:linear-gradient(135deg,#7c3aed,#a855f7,#ec4899);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);animation:logoSpin 20s linear infinite;filter:drop-shadow(0 0 60px rgba(124,58,237,0.4));"></div>
+          <div style="position:absolute;width:38px;height:38px;background:#0d0d1a;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);animation:logoSpinReverse 20s linear infinite;"></div>
         </div>
-        <h1 style="font-size:32px;font-weight:900;background:linear-gradient(135deg,#fff 30%,#a78bfa 70%,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.5px;margin-bottom:4px;">VexCenter</h1>
-        <p style="color:rgba(255,255,255,0.3);font-size:14px;margin-bottom:32px;">Zaloguj się, aby kontynuować</p>
+        <h1 style="font-size:38px;font-weight:900;background:linear-gradient(135deg,#fff 20%,#a78bfa 50%,#f472b6 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-1px;margin-bottom:4px;animation:textGlow 4s ease-in-out infinite;">VexCenter</h1>
+        <p style="color:rgba(255,255,255,0.25);font-size:14px;margin-bottom:36px;letter-spacing:1px;">Zaloguj się, aby kontynuować</p>
         <form id="splash-form" style="text-align:left;">
           <div id="splash-fields">
             <div class="form-group" id="splash-username-group" style="display:none;">
@@ -83,14 +106,14 @@
               <input type="password" id="splash-password" placeholder="••••••••" required minlength="6" />
             </div>
           </div>
-          <button type="submit" class="btn btn-primary btn-block btn-lg" id="splash-btn">Zaloguj się</button>
+          <button type="submit" class="btn btn-primary btn-block btn-lg" id="splash-btn" style="position:relative;overflow:hidden;"><span style="position:relative;z-index:1;">Zaloguj się</span></button>
         </form>
         <p style="margin-top:20px;font-size:13px;color:rgba(255,255,255,0.3);">
           <span id="splash-toggle-label">Nie masz konta?</span>
           <a id="splash-toggle" style="color:var(--purple-400);cursor:pointer;font-weight:600;">Zarejestruj się</a>
         </p>
         <div id="splash-error" style="margin-top:12px;padding:10px;border-radius:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);display:none;font-size:13px;color:var(--red-400);"></div>
-        <p style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.12);">v1.4.2 — Gaming Platform</p>
+        <p style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.12);">v1.5.0 — Gaming Platform</p>
         <a id="splash-diag" style="font-size:10px;color:rgba(255,255,255,0.08);cursor:pointer;display:block;margin-top:4px;">diagnostyka</a>
       </div>
     `;
@@ -206,7 +229,7 @@
   function initAutoUpdateListeners() {
     if (!window.VexCenter?.update || _updateListenersInit) return;
     _updateListenersInit = true;
-    const appVersion = '1.4.2';
+    const appVersion = '1.5.0';
     window.VexCenter.update.onAvailable(async (info) => {
       if (_updatePrompted) return;
       _updatePrompted = true;
@@ -227,7 +250,17 @@
     });
   }
 
+  function applyFontSettings() {
+    const font = localStorage.getItem('vex_font') || 'inter';
+    const size = localStorage.getItem('vex_font_size') || 'medium';
+    const fontMap = { inter: 'var(--font)', system: 'var(--font-system)', monospace: 'var(--font-mono)', serif: 'var(--font-serif)' };
+    const sizeMap = { small: '13px', medium: '14px', large: '16px', xlarge: '18px' };
+    document.documentElement.style.setProperty('--app-font', fontMap[font] || 'var(--font)');
+    document.documentElement.style.setProperty('--app-fs-base', sizeMap[size] || '14px');
+  }
+
   async function init() {
+    applyFontSettings();
     const savedTheme = localStorage.getItem('vex_theme');
     if (savedTheme === 'light') document.documentElement.classList.add('theme-light');
     createBackground();
