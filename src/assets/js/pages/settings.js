@@ -97,17 +97,11 @@ class SettingsPage {
         <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--glass-border);">
           <div style="flex:1;min-width:160px;">
             <label style="font-size:13px;color:rgba(255,255,255,0.5);display:block;margin-bottom:6px;">Krój czcionki</label>
-            <select id="font-family-select" style="width:100%;padding:8px 12px;border:1px solid var(--glass-border);border-radius:8px;background:rgba(255,255,255,0.04);color:#fff;font-size:13px;font-family:inherit;outline:none;cursor:pointer;">
-              ${['Inter','System','Monospace','Serif'].map(f => `<option value="${f.toLowerCase()}" ${(localStorage.getItem('vex_font')||'inter')===f.toLowerCase()?'selected':''}>${f}</option>`).join('')}
-            </select>
+            <select id="font-family-select" style="width:100%;padding:8px 12px;border:1px solid var(--glass-border);border-radius:8px;background:rgba(255,255,255,0.04);color:#fff;font-size:13px;font-family:inherit;outline:none;cursor:pointer;"></select>
           </div>
           <div style="flex:1;min-width:160px;">
             <label style="font-size:13px;color:rgba(255,255,255,0.5);display:block;margin-bottom:6px;">Rozmiar czcionki</label>
-            <div style="display:flex;gap:6px;">
-              ${[['small','S'],['medium','M'],['large','L'],['xlarge','XL']].map(([v,l]) => `
-                <button class="btn btn-sm ${(localStorage.getItem('vex_font_size')||'medium')===v?'btn-primary':'btn-secondary'}" data-font-size="${v}" style="flex:1;font-size:11px;padding:6px 4px;">${l}</button>
-              `).join('')}
-            </div>
+            <div id="font-size-btns" style="display:flex;gap:6px;"></div>
           </div>
         </div>
       </div>
@@ -420,23 +414,40 @@ class SettingsPage {
       dot.style.left = this.checked ? '22px' : '2px';
     });
 
-    document.getElementById('font-family-select')?.addEventListener('change', function() {
-      localStorage.setItem('vex_font', this.value);
-      applyFontSettings();
-    });
-    document.querySelectorAll('[data-font-size]').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('[data-font-size]').forEach(b => {
-          b.className = b.className.replace('btn-primary', 'btn-secondary');
-        });
-        this.className = this.className.replace('btn-secondary', 'btn-primary');
-        localStorage.setItem('vex_font_size', this.dataset.fontSize);
-        applyFontSettings();
+    const fontSel = document.getElementById('font-family-select');
+    if (fontSel) {
+      ['Inter','System','Monospace','Serif'].forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.toLowerCase();
+        opt.textContent = f;
+        if ((localStorage.getItem('vex_font')||'inter') === f.toLowerCase()) opt.selected = true;
+        fontSel.appendChild(opt);
       });
-    });
+      fontSel.addEventListener('change', () => {
+        localStorage.setItem('vex_font', fontSel.value);
+        settingsPage.applyFontSettings();
+      });
+    }
+    const fb = document.getElementById('font-size-btns');
+    if (fb) {
+      [['small','S'],['medium','M'],['large','L'],['xlarge','XL']].forEach(([v,l]) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-sm ' + ((localStorage.getItem('vex_font_size')||'medium')===v?'btn-primary':'btn-secondary');
+        btn.dataset.fontSize = v;
+        btn.textContent = l;
+        btn.style.cssText = 'flex:1;font-size:11px;padding:6px 4px;';
+        btn.addEventListener('click', () => {
+          fb.querySelectorAll('button').forEach(b => { b.className = b.className.replace('btn-primary','btn-secondary'); });
+          btn.className = btn.className.replace('btn-secondary','btn-primary');
+          localStorage.setItem('vex_font_size', v);
+          settingsPage.applyFontSettings();
+        });
+        fb.appendChild(btn);
+      });
+    }
   }
 
-  function applyFontSettings() {
+  applyFontSettings() {
     const font = localStorage.getItem('vex_font') || 'inter';
     const size = localStorage.getItem('vex_font_size') || 'medium';
     const fontMap = { inter: 'var(--font)', system: 'var(--font-system)', monospace: 'var(--font-mono)', serif: 'var(--font-serif)' };
