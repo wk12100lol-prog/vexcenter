@@ -106,6 +106,14 @@ class SettingsPage {
             <div id="font-size-btns" style="display:flex;gap:6px;"></div>
           </div>
         </div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--glass-border);">
+          <label style="font-size:13px;color:rgba(255,255,255,0.5);display:block;margin-bottom:8px;">Wydajność tła</label>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-sm ${(localStorage.getItem('vex_perf_mode')||'visual')==='visual'?'btn-primary':'btn-secondary'}" id="perf-visual-btn">🎨 Ładne</button>
+            <button class="btn btn-sm ${localStorage.getItem('vex_perf_mode')==='performance'?'btn-primary':'btn-secondary'}" id="perf-perf-btn">⚡ Płynne</button>
+          </div>
+          <p style="font-size:11px;color:rgba(255,255,255,0.2);margin-top:6px;">Ładne = 35 particle + 3 glow + siatka (więcej CPU/GPU). Płynne = 10 particle + 1 glow.</p>
+        </div>
       </div>
       <div style="margin-top:16px;background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:24px;">
         <h3 style="margin-bottom:12px;">Statystyki</h3>
@@ -158,6 +166,20 @@ class SettingsPage {
       document.getElementById('lang-en-btn').className = 'btn btn-sm btn-secondary';
     });
 
+    document.getElementById('perf-visual-btn')?.addEventListener('click', () => {
+      localStorage.setItem('vex_perf_mode', 'visual');
+      document.getElementById('perf-visual-btn').className = 'btn btn-sm btn-primary';
+      const perfBtn = document.getElementById('perf-perf-btn');
+      if (perfBtn) perfBtn.className = 'btn btn-sm btn-secondary';
+      if (typeof recreateBackground === 'function') recreateBackground();
+    });
+    document.getElementById('perf-perf-btn')?.addEventListener('click', () => {
+      localStorage.setItem('vex_perf_mode', 'performance');
+      document.getElementById('perf-perf-btn').className = 'btn btn-sm btn-primary';
+      const visBtn = document.getElementById('perf-visual-btn');
+      if (visBtn) visBtn.className = 'btn btn-sm btn-secondary';
+      if (typeof recreateBackground === 'function') recreateBackground();
+    });
     document.getElementById('s-avatar-input')?.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -588,7 +610,7 @@ class SettingsPage {
       <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:32px;text-align:center;">
         <div style="width:80px;height:80px;background:linear-gradient(135deg,#7c3aed,#a855f7,#ec4899);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);margin:0 auto 20px;animation:logoSpin 12s linear infinite;filter:drop-shadow(0 0 40px rgba(124,58,237,0.3));"></div>
         <h2 style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#fff 20%,#a78bfa 50%,#f472b6 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;">VexCenter</h2>
-        <p style="color:rgba(255,255,255,0.3);font-size:13px;margin-bottom:24px;">v1.6.3 — Gaming Platform</p>
+        <p style="color:rgba(255,255,255,0.3);font-size:13px;margin-bottom:24px;">v1.6.4 — Gaming Platform</p>
         <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.1);border-radius:12px;padding:24px;margin-bottom:20px;">
           <p style="font-size:14px;color:rgba(255,255,255,0.7);margin-bottom:8px;">Stworzone przez</p>
           <p style="font-size:20px;font-weight:800;background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">VexHack Team</p>

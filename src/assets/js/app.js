@@ -18,28 +18,58 @@
   function createBackground() {
     const canvas = document.createElement('div');
     canvas.id = 'bg-canvas';
+    const perfMode = localStorage.getItem('vex_perf_mode') === 'performance';
 
-    for (let i = 0; i < 3; i++) {
-      const g = document.createElement('div'); g.className = 'bg-glow'; canvas.appendChild(g);
-    }
-    const l = document.createElement('div'); l.className = 'bg-line'; canvas.appendChild(l);
+    if (perfMode) {
+      // Performance mode: minimal
+      for (let i = 0; i < 1; i++) {
+        const g = document.createElement('div'); g.className = 'bg-glow'; g.style.opacity = '0.06'; g.style.animation = 'none'; canvas.appendChild(g);
+      }
+      const colors = ['#7c3aed', '#a855f7', '#ec4899', '#06b6d4'];
+      for (let i = 0; i < 10; i++) {
+        const p = document.createElement('div'); p.className = 'bg-particle';
+        const c = colors[i % colors.length];
+        const sz = 2 + Math.random() * 2;
+        const col = 10 + Math.random() * 80;
+        Object.assign(p.style, {
+          '--col': c, '--size': sz+'px', '--glow': (sz*3)+'px',
+          '--dur': (18 + Math.random() * 22)+'s', '--delay': (Math.random() * 20)+'s',
+          '--drift': (Math.random() - 0.5) * 15 + 'px',
+          '--max-op': (0.15 + Math.random() * 0.2),
+          left: col + '%', top: (Math.random() * 90 + 5) + '%'
+        });
+        canvas.appendChild(p);
+      }
+    } else {
+      // Visual mode: current
+      for (let i = 0; i < 3; i++) {
+        const g = document.createElement('div'); g.className = 'bg-glow'; canvas.appendChild(g);
+      }
+      const l = document.createElement('div'); l.className = 'bg-line'; canvas.appendChild(l);
 
-    const colors = ['#7c3aed', '#a855f7', '#ec4899', '#06b6d4', '#8b5cf6', '#f472b6'];
-    for (let i = 0; i < 35; i++) {
-      const p = document.createElement('div'); p.className = 'bg-particle';
-      const c = colors[i % colors.length];
-      const sz = 2 + Math.random() * 3;
-      const col = 20 + Math.random() * 60;
-      Object.assign(p.style, {
-        '--col': c, '--size': sz+'px', '--glow': (sz*4)+'px',
-        '--dur': (12 + Math.random() * 18)+'s', '--delay': (Math.random() * 15)+'s',
-        '--drift': (Math.random() - 0.5) * 30 + 'px',
-        '--max-op': (0.3 + Math.random() * 0.4),
-        left: col + '%', top: (Math.random() * 90 + 5) + '%'
-      });
-      canvas.appendChild(p);
+      const colors = ['#7c3aed', '#a855f7', '#ec4899', '#06b6d4', '#8b5cf6', '#f472b6'];
+      for (let i = 0; i < 35; i++) {
+        const p = document.createElement('div'); p.className = 'bg-particle';
+        const c = colors[i % colors.length];
+        const sz = 2 + Math.random() * 3;
+        const col = 20 + Math.random() * 60;
+        Object.assign(p.style, {
+          '--col': c, '--size': sz+'px', '--glow': (sz*4)+'px',
+          '--dur': (12 + Math.random() * 18)+'s', '--delay': (Math.random() * 15)+'s',
+          '--drift': (Math.random() - 0.5) * 30 + 'px',
+          '--max-op': (0.3 + Math.random() * 0.4),
+          left: col + '%', top: (Math.random() * 90 + 5) + '%'
+        });
+        canvas.appendChild(p);
+      }
     }
     document.body.appendChild(canvas);
+  }
+
+  function recreateBackground() {
+    const old = document.getElementById('bg-canvas');
+    if (old) old.remove();
+    createBackground();
   }
 
   /* === SPLASH SCREEN === */
