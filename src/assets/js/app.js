@@ -201,10 +201,11 @@
           </div>
           <button type="submit" class="btn btn-primary btn-block btn-lg" id="splash-btn" style="position:relative;overflow:hidden;"><span style="position:relative;z-index:1;">Zaloguj się</span></button>
         </form>
-        <p style="margin-top:20px;font-size:13px;color:rgba(255,255,255,0.3);">
-          <span id="splash-toggle-label">Nie masz konta?</span>
-          <a id="splash-toggle" style="color:var(--purple-400);cursor:pointer;font-weight:600;">Zarejestruj się</a>
-        </p>
+          <p style="margin-top:20px;font-size:13px;color:rgba(255,255,255,0.3);">
+            <span id="splash-toggle-label">Nie masz konta?</span>
+            <a id="splash-toggle" style="color:var(--purple-400);cursor:pointer;font-weight:600;">Zarejestruj się</a>
+          </p>
+          <p style="margin-top:6px;font-size:12px;"><a id="splash-forgot" style="color:rgba(255,255,255,0.25);cursor:pointer;">Nie pamiętasz hasła?</a></p>
         <div id="splash-error" style="margin-top:12px;padding:10px;border-radius:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);display:none;font-size:13px;color:var(--red-400);"></div>
         <p style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.12);">v${window.VexCenter?.appVersion || '1.6.0'} — Gaming Platform</p>
         <a id="splash-diag" style="font-size:10px;color:rgba(255,255,255,0.08);cursor:pointer;display:block;margin-top:4px;">diagnostyka</a>
@@ -277,6 +278,84 @@
         btn.disabled = false;
         btn.textContent = loginMode ? 'Zaloguj się' : 'Utwórz konto';
       }
+    });
+
+    document.getElementById('splash-forgot')?.addEventListener('click', () => {
+      const email = emailInput.value.trim();
+      if (!email || !email.includes('@')) {
+        showModal('Reset hasła', 'Najpierw wpisz swój adres email w polu powyżej.', 'info');
+        return;
+      }
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;animation:modalFadeIn 0.3s ease;';
+      modal.innerHTML = `
+        <div style="background:var(--card-bg,#1a1a2e);border:1px solid var(--glass-border,rgba(255,255,255,0.08));border-radius:16px;padding:32px;width:380px;max-width:90vw;text-align:center;">
+          <h3 style="margin-bottom:4px;">Resetowanie hasła</h3>
+          <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:20px;">Kod zostanie wysłany na <strong style="color:rgba(255,255,255,0.6);">${email}</strong></p>
+          <div id="forgot-code-group" style="display:none;">
+            <div class="form-group"><label>Kod z emaila</label><input type="text" id="forgot-code" maxlength="6" placeholder="000000" style="text-align:center;font-size:24px;letter-spacing:8px;font-weight:700;" /></div>
+            <div class="form-group"><label>Nowe hasło</label><input type="password" id="forgot-newpass" placeholder="••••••••" minlength="6" /></div>
+            <button class="btn btn-primary btn-block" id="forgot-reset-btn">Zmień hasło</button>
+            <p id="forgot-reset-error" style="margin-top:8px;font-size:12px;color:var(--red-400);display:none;"></p>
+          </div>
+          <div id="forgot-email-group">
+            <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:16px;">Wyślemy 6-cyfrowy kod na podany adres email.</p>
+            <button class="btn btn-primary btn-block" id="forgot-send-btn">Wyślij kod</button>
+          </div>
+          <p id="forgot-status" style="margin-top:12px;font-size:13px;color:rgba(255,255,255,0.4);display:none;"></p>
+          <button class="btn btn-ghost btn-sm" id="forgot-close" style="margin-top:12px;">Anuluj</button>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      modal.querySelector('#forgot-close')?.addEventListener('click', () => modal.remove());
+      modal.querySelector('#forgot-send-btn')?.addEventListener('click', async () => {
+        const statusEl = modal.querySelector('#forgot-status');
+        const sendBtn = modal.querySelector('#forgot-send-btn');
+        sendBtn.disabled = true; sendBtn.textContent = 'Wysyłanie...'; statusEl.style.display = 'none';
+        try {
+          const res = await api.post('auth/forgot-password', { email });
+          const d = res.data || res;
+          statusEl.style.display = 'block'; statusEl.textContent = 'Kod został wysłany!';
+          statusEl.style.color = 'var(--green-400,rgba(16,185,129,1))';
+          modal.querySelector('#forgot-email-group').style.display = 'none';
+          modal.querySelector('#forgot-code-group').style.display = 'block';
+          if (d.dev_code) {
+            const codeHint = modal.querySelector('#forgot-code');
+            if (codeHint) codeHint.placeholder = d.dev_code;
+          }
+        } catch (err) {
+          statusEl.style.display = 'block'; statusEl.textContent = err.message;
+          statusEl.style.color = 'var(--red-400,rgba(239,68,68,1))';
+          sendBtn.disabled = false; sendBtn.textContent = 'Wyślij kod';
+        }
+      });
+      modal.querySelector('#forgot-reset-btn')?.addEventListener('click', async () => {
+        const code = modal.querySelector('#forgot-code').value.trim();
+        const password = modal.querySelector('#forgot-newpass').value;
+        const errorEl = modal.querySelector('#forgot-reset-error');
+        errorEl.style.display = 'none';
+        if (code.length !== 6) { errorEl.textContent = 'Kod musi mieć 6 cyfr'; errorEl.style.display = 'block'; return; }
+        if (password.length < 6) { errorEl.textContent = 'Hasło musi mieć min. 6 znaków'; errorEl.style.display = 'block'; return; }
+        const btn = modal.querySelector('#forgot-reset-btn');
+        btn.disabled = true; btn.textContent = 'Zmienianie...';
+        try {
+          const res = await api.post('auth/reset-password', { email, code, password });
+          const d = res.data || res;
+          modal.innerHTML = `
+            <div style="padding:40px;text-align:center;">
+              <div style="font-size:48px;margin-bottom:16px;">✓</div>
+              <h3 style="margin-bottom:4px;">Hasło zmienione!</h3>
+              <p style="font-size:13px;color:rgba(255,255,255,0.4);">Możesz teraz zalogować się nowym hasłem.</p>
+              <button class="btn btn-primary" id="forgot-done" style="margin-top:20px;">OK</button>
+            </div>
+          `;
+          modal.querySelector('#forgot-done')?.addEventListener('click', () => modal.remove());
+        } catch (err) {
+          errorEl.textContent = err.message; errorEl.style.display = 'block';
+          btn.disabled = false; btn.textContent = 'Zmień hasło';
+        }
+      });
     });
 
   }

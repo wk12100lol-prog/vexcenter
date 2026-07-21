@@ -9,6 +9,12 @@ switch ($id) {
     case 'logout':
         require __DIR__ . '/logout.php';
         break;
+    case 'forgot-password':
+        require __DIR__ . '/forgot-password.php';
+        break;
+    case 'reset-password':
+        require __DIR__ . '/reset-password.php';
+        break;
     default:
         Response::error(404, 'Auth endpoint not found');
 }

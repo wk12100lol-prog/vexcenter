@@ -13,9 +13,9 @@ class SettingsPage {
         <div class="page-header"><h1>Ustawienia</h1></div>
         <div style="display:flex;gap:24px;">
           <div class="settings-tabs" style="width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:4px;">
-            ${['profile','friends','developer','games','notifications','updates','steam','reports','about'].map((t,i) => `
+            ${['profile','friends','developer','games','notifications','updates','steam','reports','downloads','about'].map((t,i) => `
               <button class="btn settings-tab ${i===0?'btn-primary':'btn-ghost'}" data-tab="${t}" style="text-align:left;justify-content:flex-start;padding:10px 14px;border-radius:8px;">
-                ${t === 'profile' ? '👤 Profil' : t === 'friends' ? '👥 Znajomi' : t === 'developer' ? '🛠 Deweloper' : t === 'games' ? '🎮 Gry' : t === 'notifications' ? '🔔 Powiadomienia' : t === 'updates' ? '🔄 Aktualizacje' : t === 'steam' ? '🟦 Steam' : t === 'reports' ? '📋 Zgłoszenia' : 'ℹ️ O nas'}
+                ${t === 'profile' ? '👤 Profil' : t === 'friends' ? '👥 Znajomi' : t === 'developer' ? '🛠 Deweloper' : t === 'games' ? '🎮 Gry' : t === 'notifications' ? '🔔 Powiadomienia' : t === 'updates' ? '🔄 Aktualizacje' : t === 'steam' ? '🟦 Steam' : t === 'reports' ? '📋 Zgłoszenia' : t === 'downloads' ? '📥 Pobieranie' : 'ℹ️ O nas'}
               </button>
             `).join('')}
           </div>
@@ -45,6 +45,7 @@ class SettingsPage {
       else if (this.tab === 'updates') this.renderUpdates(el);
       else if (this.tab === 'steam') this.renderSteam(el);
       else if (this.tab === 'reports') this.renderReports(el);
+      else if (this.tab === 'downloads') this.renderDownloads(el);
       else if (this.tab === 'about') this.renderAbout(el);
     } catch { el.innerHTML = '<div class="empty-state"><p>Błąd ładowania ustawień</p></div>'; }
   }
@@ -367,6 +368,11 @@ class SettingsPage {
           <button class="btn btn-success" id="btn-install-update" style="display:none;background:var(--green-500);">🔄 Zainstaluj teraz</button>
         </div>
       </div>
+      <div style="margin-top:16px;background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:24px;">
+        <h3 style="margin-bottom:4px;">Historia wersji</h3>
+        <p style="color:rgba(255,255,255,0.3);font-size:13px;margin-bottom:16px;">Ostatnie wydania VexCenter z GitHub.</p>
+        <div id="release-notes" style="font-size:13px;">Ładowanie...</div>
+      </div>
     `;
 
     if (!window.VexCenter?.update) {
@@ -469,6 +475,20 @@ class SettingsPage {
         fb.appendChild(btn);
       });
     }
+
+    fetch('https://api.github.com/repos/wk12100lol-prog/vexcenter/releases?per_page=5').then(r=>r.json()).then(releases=>{
+      const el=document.getElementById('release-notes'); if(!el) return;
+      if(!Array.isArray(releases)||!releases.length){el.innerHTML='<p style="color:rgba(255,255,255,0.2);">Brak informacji.</p>';return;}
+      el.innerHTML=releases.map((r,i)=>`
+        <div style="padding:12px;border-bottom:1px solid rgba(255,255,255,0.05);${i===0?'background:rgba(124,58,237,0.06);border-radius:8px;margin-bottom:8px;':''}">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <a href="${r.html_url}" target="_blank" style="font-weight:600;color:var(--purple-400);text-decoration:none;font-size:14px;">${r.tag_name}</a>
+            <span style="font-size:11px;color:rgba(255,255,255,0.2);">${new Date(r.published_at).toLocaleDateString('pl-PL')}</span>
+          </div>
+          ${r.body?'<p style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;white-space:pre-wrap;">'+r.body.substring(0,300)+'</p>':''}
+        </div>
+      `).join('');
+    }).catch(()=>{const el=document.getElementById('release-notes');if(el)el.innerHTML='<p style="color:rgba(255,255,255,0.2);">Nie można załadować.</p>';});
   }
 
   applyFontSettings() {
@@ -605,12 +625,73 @@ class SettingsPage {
     } catch { el.innerHTML = '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:20px;">Błąd ładowania zgłoszeń.</p>'; }
   }
 
+  renderDownloads(el) {
+    const dl = window.VexCenter?.download;
+    if (!dl) {
+      el.innerHTML = '<div style="padding:24px;text-align:center;color:rgba(255,255,255,0.3);font-size:13px;">Menedżer pobierania dostępny tylko w aplikacji desktopowej.</div>';
+      return;
+    }
+    el.innerHTML = `
+      <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:24px;">
+        <h3 style="margin-bottom:4px;">Menedżer pobierania</h3>
+        <p style="color:rgba(255,255,255,0.3);font-size:13px;margin-bottom:20px;">Wstrzymuj i wznawiaj pobieranie gier.</p>
+        <div id="downloads-list" style="display:flex;flex-direction:column;gap:12px;">Ładowanie...</div>
+      </div>
+    `;
+    this._refreshDownloads();
+    const unsub = dl.onUpdate(() => this._refreshDownloads());
+    this._dlUnsub = unsub;
+  }
+
+  _refreshDownloads() {
+    const el = document.getElementById('downloads-list');
+    if (!el) return;
+    const dl = window.VexCenter?.download;
+    if (!dl) return;
+    dl.list().then(list => {
+      if (!list || !list.length) {
+        el.innerHTML = '<p style="color:rgba(255,255,255,0.2);text-align:center;padding:20px;font-size:13px;">Brak pobieranych plików.</p>';
+        return;
+      }
+      el.innerHTML = list.map(d => {
+        const isActive = d.state === 'downloading';
+        const isPaused = d.state === 'paused';
+        const isCompleted = d.state === 'completed';
+        const isFailed = d.state === 'failed';
+        const pct = d.progress || 0;
+        const stateIcon = isActive ? '⏳' : isPaused ? '⏸️' : isCompleted ? '✅' : '❌';
+        const stateText = isActive ? 'Pobieranie' : isPaused ? 'Wstrzymane' : isCompleted ? 'Zakończone' : 'Błąd';
+        return `
+          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">${stateIcon} ${d.title||d.filename||'Nieznany'}</span>
+              <span style="font-size:11px;color:rgba(255,255,255,0.3);">${stateText}</span>
+            </div>
+            <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;margin-bottom:8px;">
+              <div style="height:100%;width:${pct}%;background:${isFailed?'var(--red-400,#ef4444)':isCompleted?'var(--green-400,#10b981)':'var(--purple-400,#a78bfa)'};border-radius:4px;transition:width 0.3s;"></div>
+            </div>
+            <div style="display:flex;gap:6px;">
+              ${isActive ? `<button class="btn btn-sm btn-ghost dl-pause" data-id="${d.id}">⏸ Wstrzymaj</button>` : ''}
+              ${isPaused ? `<button class="btn btn-sm btn-primary dl-resume" data-id="${d.id}">▶ Wznów</button>` : ''}
+              ${(isActive||isPaused) ? `<button class="btn btn-sm btn-ghost dl-cancel" data-id="${d.id}">🗑 Anuluj</button>` : ''}
+              ${isFailed ? `<button class="btn btn-sm btn-ghost dl-cancel" data-id="${d.id}">🗑 Usuń</button>` : ''}
+              ${isCompleted ? `<span style="font-size:11px;color:rgba(255,255,255,0.2);padding:6px 10px;">${d.filepath||''}</span>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      el.querySelectorAll('.dl-pause').forEach(b => b.addEventListener('click', () => { dl.pause(b.dataset.id); this._refreshDownloads(); }));
+      el.querySelectorAll('.dl-resume').forEach(b => b.addEventListener('click', () => { dl.resume(b.dataset.id); setTimeout(()=>this._refreshDownloads(),500); }));
+      el.querySelectorAll('.dl-cancel').forEach(b => b.addEventListener('click', () => { dl.cancel(b.dataset.id); this._refreshDownloads(); }));
+    }).catch(() => { el.innerHTML = '<p style="color:rgba(255,255,255,0.2);text-align:center;padding:20px;">Błąd ładowania listy.</p>'; });
+  }
+
   renderAbout(el) {
     el.innerHTML = `
       <div style="background:var(--glass-bg);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:12px;padding:32px;text-align:center;">
         <div style="width:80px;height:80px;background:linear-gradient(135deg,#7c3aed,#a855f7,#ec4899);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);margin:0 auto 20px;animation:logoSpin 12s linear infinite;filter:drop-shadow(0 0 40px rgba(124,58,237,0.3));"></div>
         <h2 style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#fff 20%,#a78bfa 50%,#f472b6 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;">VexCenter</h2>
-        <p style="color:rgba(255,255,255,0.3);font-size:13px;margin-bottom:24px;">v1.6.4 — Gaming Platform</p>
+        <p style="color:rgba(255,255,255,0.3);font-size:13px;margin-bottom:24px;">v1.6.5 — Gaming Platform</p>
         <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.1);border-radius:12px;padding:24px;margin-bottom:20px;">
           <p style="font-size:14px;color:rgba(255,255,255,0.7);margin-bottom:8px;">Stworzone przez</p>
           <p style="font-size:20px;font-weight:800;background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">VexHack Team</p>

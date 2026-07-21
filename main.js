@@ -195,30 +195,123 @@ ipcMain.handle('steam:scan', async () => {
   return { games: results };
 });
 
+const DOWNLOADS_FILE = path.join(app.getPath('userData'), 'downloads.json');
+let downloadsStore = {};
+try { if (fs.existsSync(DOWNLOADS_FILE)) downloadsStore = JSON.parse(fs.readFileSync(DOWNLOADS_FILE, 'utf8')); } catch {}
+function saveDownloads() { try { fs.writeFileSync(DOWNLOADS_FILE, JSON.stringify(downloadsStore, null, 2)); } catch {} }
+function sendDownloadsUpdate() { if (mainWindow) mainWindow.webContents.send('downloads:update', downloadsStore); }
+const activeRequests = {};
+
+function downloadStream(res, filepath, resolve, downloadId) {
+  const total = parseInt(res.headers['content-length'] || '0', 10);
+  const file = fs.createWriteStream(filepath, { flags: 'a' });
+  if (downloadsStore[downloadId]) downloadsStore[downloadId].totalSize = total;
+  res.pipe(file);
+  res.on('data', (chunk) => {
+    if (downloadsStore[downloadId]) {
+      downloadsStore[downloadId].downloadedBytes = (downloadsStore[downloadId].downloadedBytes || 0) + chunk.length;
+      const ts = downloadsStore[downloadId].totalSize || 1;
+      downloadsStore[downloadId].progress = Math.min(99, Math.round((downloadsStore[downloadId].downloadedBytes / ts) * 100));
+    }
+  });
+  res.on('end', () => { if (downloadsStore[downloadId]) { downloadsStore[downloadId].progress = 100; downloadsStore[downloadId].state = 'completed'; saveDownloads(); sendDownloadsUpdate(); } });
+  file.on('finish', () => { file.close(); resolve({ success: true, path: filepath }); });
+  file.on('error', (e) => { fs.unlink(filepath, () => {}); if (downloadsStore[downloadId]) { downloadsStore[downloadId].state = 'failed'; downloadsStore[downloadId].error = e.message; saveDownloads(); sendDownloadsUpdate(); } resolve({ success: false, error: e.message }); });
+}
+
 ipcMain.handle('game:download', async (event, url, destDir) => {
   try {
     if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
-    return await downloadWithHostHandler(url, destDir);
-  } catch (e) { return { success: false, error: e.message }; }
+    const downloadId = crypto.randomUUID();
+    const filename = path.basename(url.split('?')[0].split('#')[0]) || 'game.zip';
+    downloadsStore[downloadId] = { id: downloadId, url, destDir, filepath: path.join(destDir, filename), filename, state: 'downloading', progress: 0, downloadedBytes: 0, totalSize: 0, startedAt: new Date().toISOString(), title: filename };
+    saveDownloads(); sendDownloadsUpdate();
+    return { ...(await downloadWithHostHandler(url, destDir, downloadId)), downloadId };
+  } catch (e) {
+    const downloadId = crypto.randomUUID();
+    downloadsStore[downloadId] = { id: downloadId, url, destDir, state: 'failed', error: e.message, startedAt: new Date().toISOString() };
+    saveDownloads(); sendDownloadsUpdate();
+    return { success: false, error: e.message, downloadId };
+  }
 });
 
 async function fetchPage(url) {
   return new Promise((resolve, reject) => {
     const proto = url.startsWith('https') ? https : http;
     proto.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } }, (res) => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        fetchPage(res.headers.location).then(resolve).catch(reject);
-        return;
-      }
-      let data = '';
-      res.on('data', (c) => data += c);
-      res.on('end', () => resolve(data));
-      res.on('error', reject);
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) { fetchPage(res.headers.location).then(resolve).catch(reject); return; }
+      let data = ''; res.on('data', (c) => data += c); res.on('end', () => resolve(data)); res.on('error', reject);
     }).on('error', reject);
   });
 }
 
-async function downloadWithHostHandler(url, destDir) {
+async function downloadWithHostHandler(url, destDir, downloadId) {
+  const host = new URL(url).hostname.toLowerCase();
+  let targetUrl = url;
+  if (host.includes('mediafire.com')) {
+    const html = await fetchPage(url);
+    const pp = [/aria-label="Download file".*?href="(https:[^"]+)"/,/id="downloadButton".*?href="(https:[^"]+)"/,/href="(https:\/\/download[^"]+)"/,/"(https:\/\/[^"]*mediafire[^"]*download[^"]*)"/,/kno\.textContent\s*=\s*'([^']+)'/];
+    for (const p of pp) { const m = html.match(p); if (m) { targetUrl = m[1].replace(/&amp;/g, '&'); break; } }
+    if (targetUrl === url) return { success: false, error: 'Nie można znaleźć linku do pobrania z MediaFire.' };
+  } else if (host.includes('drive.google.com')||host.includes('googleusercontent.com')) { const f = url.match(/[-\w]{25,}/)?.[0]; if (!f) return { success: false, error: 'Nieprawidłowy link Google Drive' }; targetUrl = `https://drive.usercontent.google.com/download?id=${f}&export=download&confirm=t`; }
+  else if (host.includes('dropbox.com')) { targetUrl = url + (url.includes('?')?'&':'?') + 'dl=1'; }
+  else if (['bzzhr.to','buzzheavier.com','bzzhr.co','fuckingfast.net','fuckingfast.co'].some(d=>host.includes(d))) { targetUrl = url.replace(/\/?$/, '/download'); let dl = await directDownload(targetUrl, destDir, downloadId); if (!dl.success) { const h = await fetchPage(url); const m = h.match(/href="([^"]+)"[^>]*download/i)||h.match(/"(https:\/\/[^"]+\/(file|d)\/[^"]+)"/); if (m) { targetUrl = m[1]; dl = await directDownload(targetUrl, destDir, downloadId); } } return dl; }
+  else if (host.includes('1fichier.com')) { const h = await fetchPage(url); const m = h.match(/href="(https:\/\/[^"]+1fichier[^"]+)"[^>]*>Download/); if (m) targetUrl = m[1]; }
+  else if (host.includes('uploaded.net')||host.includes('uploaded.to')) { const m = url.match(/file\/([a-zA-Z0-9]+)/); if (m) targetUrl = `https://uploaded.net/file/${m[1]}/download`; }
+  return await directDownload(targetUrl, destDir, downloadId);
+}
+
+async function directDownload(url, destDir, downloadId) {
+  return new Promise((resolve) => {
+    try {
+      if (!downloadsStore[downloadId]) return resolve({ success: false, error: 'Anulowano' });
+      const filepath = downloadsStore[downloadId].filepath;
+      const existingSize = fs.existsSync(filepath) ? fs.statSync(filepath).size : 0;
+      downloadsStore[downloadId].downloadedBytes = existingSize;
+      const proto = url.startsWith('https')?https:http;
+      const opts = { headers: {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}};
+      if (existingSize>0) opts.headers.Range = 'bytes='+existingSize+'-';
+      const req = proto.get(url, opts, (res) => {
+        if (existingSize>0 && res.statusCode===416) { fs.unlinkSync(filepath); downloadsStore[downloadId].downloadedBytes=0; const r2=proto.get(url, opts, (r)=>{downloadStream(r,filepath,resolve,downloadId);}); activeRequests[downloadId]=r2; return; }
+        if (existingSize>0 && res.statusCode===206 && downloadsStore[downloadId]) downloadsStore[downloadId].resumedFrom=existingSize;
+        if (downloadsStore[downloadId]) downloadsStore[downloadId].totalSize=existingSize+parseInt(res.headers['content-length']||'0',10);
+        let redir=0;
+        function handle(resp) {
+          if (resp.statusCode>=300 && resp.statusCode<400 && resp.headers.location && redir<5) { redir++; const to=resp.headers.location.startsWith('http')?resp.headers.location:new URL(resp.headers.location,url).href; const r2=proto.get(to,opts,handle).on('error',(e)=>resolve({success:false,error:e.message})); activeRequests[downloadId]=r2; return; }
+          downloadStream(resp,filepath,resolve,downloadId);
+        }
+        handle(res);
+      });
+      activeRequests[downloadId]=req;
+      req.on('error',(e)=>{if(e.message.includes('aborted')&&downloadsStore[downloadId]?.state==='paused')resolve({success:false,paused:true,path:filepath}); else{if(downloadsStore[downloadId]){downloadsStore[downloadId].state='failed';downloadsStore[downloadId].error=e.message;saveDownloads();sendDownloadsUpdate();}resolve({success:false,error:e.message});}});
+    } catch(e){if(downloadsStore[downloadId]){downloadsStore[downloadId].state='failed';downloadsStore[downloadId].error=e.message;saveDownloads();sendDownloadsUpdate();}resolve({success:false,error:e.message});}
+  });
+}
+
+ipcMain.handle('download:pause', (_, id)=>{if(!downloadsStore[id]||downloadsStore[id].state!=='downloading')return{success:false};if(activeRequests[id]){activeRequests[id].destroy?.();delete activeRequests[id];}downloadsStore[id].state='paused';saveDownloads();sendDownloadsUpdate();return{success:true};});
+ipcMain.handle('download:resume', async (_,id)=>{if(!downloadsStore[id]||downloadsStore[id].state!=='paused')return{success:false};downloadsStore[id].state='downloading';downloadsStore[id].error=null;saveDownloads();sendDownloadsUpdate();const r=await directDownload(downloadsStore[id].url,downloadsStore[id].destDir,id);if(r.success){downloadsStore[id].state='completed';downloadsStore[id].progress=100;saveDownloads();sendDownloadsUpdate();}else if(!r.paused){downloadsStore[id].state='failed';downloadsStore[id].error=r.error;saveDownloads();sendDownloadsUpdate();}return r;});
+ipcMain.handle('download:cancel', (_,id)=>{if(!downloadsStore[id])return{success:false};if(activeRequests[id]){activeRequests[id].destroy?.();delete activeRequests[id];}if(downloadsStore[id].filepath&&fs.existsSync(downloadsStore[id].filepath))try{fs.unlinkSync(downloadsStore[id].filepath)}catch{}delete downloadsStore[id];saveDownloads();sendDownloadsUpdate();return{success:true};});
+ipcMain.handle('download:list', ()=>Object.values(downloadsStore));
+
+const activeRequests = {};
+
+ipcMain.handle('game:download', async (event, url, destDir) => {
+  try {
+    if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+    const downloadId = crypto.randomUUID();
+    downloadsStore[downloadId] = { id: downloadId, url, destDir, state: 'downloading', progress: 0, startedAt: new Date().toISOString(), title: path.basename(url.split('?')[0]) || 'game.zip' };
+    saveDownloads(); sendDownloadsUpdate();
+    const result = await downloadWithHostHandler(url, destDir, downloadId);
+    return { ...result, downloadId };
+  } catch (e) {
+    const downloadId = crypto.randomUUID();
+    downloadsStore[downloadId] = { id: downloadId, url, destDir, state: 'failed', error: e.message, startedAt: new Date().toISOString(), title: path.basename(url.split('?')[0]) || 'game.zip' };
+    saveDownloads(); sendDownloadsUpdate();
+    return { success: false, error: e.message, downloadId };
+  }
+});
+
+async function downloadWithHostHandler(url, destDir, downloadId) {
   const host = new URL(url).hostname.toLowerCase();
   let targetUrl = url;
 
@@ -244,11 +337,11 @@ async function downloadWithHostHandler(url, destDir) {
     targetUrl = url + (url.includes('?') ? '&' : '?') + 'dl=1';
   } else if (['bzzhr.to', 'buzzheavier.com', 'bzzhr.co', 'fuckingfast.net', 'fuckingfast.co'].some(d => host.includes(d))) {
     targetUrl = url.replace(/\/?$/, '/download');
-    let dl = await directDownload(targetUrl, destDir);
+    let dl = await directDownload(targetUrl, destDir, downloadId);
     if (!dl.success) {
       const html = await fetchPage(url);
       const m = html.match(/href="([^"]+)"[^>]*download/i) || html.match(/"(https:\/\/[^"]+\/(file|d)\/[^"]+)"/);
-      if (m) { targetUrl = m[1]; dl = await directDownload(targetUrl, destDir); }
+      if (m) { targetUrl = m[1]; dl = await directDownload(targetUrl, destDir, downloadId); }
     }
     return dl;
   } else if (host.includes('1fichier.com')) {
@@ -260,45 +353,99 @@ async function downloadWithHostHandler(url, destDir) {
     if (m) targetUrl = `https://uploaded.net/file/${m[1]}/download`;
   }
 
-  return await directDownload(targetUrl, destDir);
+  return await directDownload(targetUrl, destDir, downloadId);
 }
 
-async function directDownload(url, destDir) {
+async function directDownload(url, destDir, downloadId) {
   return new Promise((resolve) => {
     try {
       const filename = path.basename(url.split('?')[0].split('#')[0]) || 'game.zip';
       const filepath = path.join(destDir, filename);
+      if (downloadsStore[downloadId]) { downloadsStore[downloadId].filepath = filepath; downloadsStore[downloadId].filename = filename; saveDownloads(); sendDownloadsUpdate(); }
+      const existingSize = fs.existsSync(filepath) ? fs.statSync(filepath).size : 0;
       const proto = url.startsWith('https') ? https : http;
       const opts = { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } };
-      proto.get(url, opts, (res) => {
+      if (existingSize > 0) opts.headers.Range = 'bytes=' + existingSize + '-';
+      const req = proto.get(url, opts, (res) => {
+        if (existingSize > 0 && res.statusCode === 416) {
+          fs.unlinkSync(filepath);
+          const req2 = proto.get(url, opts, (res2) => {
+            if (downloadsStore[downloadId]) { downloadsStore[downloadId].resumedFrom = 0; }
+            downloadStream(res2, filepath, resolve, downloadId);
+          });
+          activeRequests[downloadId] = req2;
+          return;
+        }
+        if (existingSize > 0 && res.statusCode === 206) {
+          if (downloadsStore[downloadId]) { downloadsStore[downloadId].resumedFrom = existingSize; }
+        }
+        if (downloadsStore[downloadId]) { downloadsStore[downloadId].totalSize = existingSize + parseInt(res.headers['content-length'] || '0', 10); }
         let redir = 0;
         function handle(resp) {
           if (resp.statusCode >= 300 && resp.statusCode < 400 && resp.headers.location && redir < 5) {
             redir++;
             const redirectTo = resp.headers.location.startsWith('http') ? resp.headers.location : new URL(resp.headers.location, url).href;
-            proto.get(redirectTo, opts, handle).on('error', (e) => resolve({ success: false, error: e.message }));
+            const req2 = proto.get(redirectTo, opts, handle).on('error', (e) => resolve({ success: false, error: e.message }));
+            activeRequests[downloadId] = req2;
             return;
           }
-          downloadStream(resp, filepath, resolve);
+          downloadStream(resp, filepath, resolve, downloadId);
         }
         handle(res);
-      }).on('error', (e) => resolve({ success: false, error: e.message }));
-    } catch (e) { resolve({ success: false, error: e.message }); }
+      });
+      activeRequests[downloadId] = req;
+      req.on('error', (e) => {
+        if (e.message.includes('aborted') && downloadsStore[downloadId]?.state === 'paused') {
+          resolve({ success: false, paused: true, path: filepath });
+        } else {
+          if (downloadsStore[downloadId]) { downloadsStore[downloadId].state = 'failed'; downloadsStore[downloadId].error = e.message; saveDownloads(); sendDownloadsUpdate(); }
+          resolve({ success: false, error: e.message });
+        }
+      });
+    } catch (e) {
+      if (downloadsStore[downloadId]) { downloadsStore[downloadId].state = 'failed'; downloadsStore[downloadId].error = e.message; saveDownloads(); sendDownloadsUpdate(); }
+      resolve({ success: false, error: e.message });
+    }
   });
 }
 
-function downloadStream(res, filepath, resolve) {
-  const total = parseInt(res.headers['content-length'] || '0', 10);
-  let downloaded = 0;
-  const file = fs.createWriteStream(filepath);
-  res.pipe(file);
-  res.on('data', (chunk) => {
-    downloaded += chunk.length;
-    if (total > 0 && mainWindow) mainWindow.webContents.send('download:progress', Math.round((downloaded / total) * 100));
-  });
-  file.on('finish', () => { file.close(); resolve({ success: true, path: filepath }); });
-  file.on('error', (e) => { fs.unlink(filepath, () => {}); resolve({ success: false, error: e.message }); });
-}
+ipcMain.handle('download:pause', (_, downloadId) => {
+  if (!downloadsStore[downloadId]) return { success: false, error: 'Download not found' };
+  if (downloadsStore[downloadId].state !== 'downloading') return { success: false, error: 'Not downloading' };
+  if (activeRequests[downloadId]) { activeRequests[downloadId].destroy(); delete activeRequests[downloadId]; }
+  downloadsStore[downloadId].state = 'paused';
+  saveDownloads(); sendDownloadsUpdate();
+  return { success: true };
+});
+
+ipcMain.handle('download:resume', async (_, downloadId) => {
+  if (!downloadsStore[downloadId]) return { success: false, error: 'Download not found' };
+  if (downloadsStore[downloadId].state !== 'paused') return { success: false, error: 'Not paused' };
+  downloadsStore[downloadId].state = 'downloading';
+  downloadsStore[downloadId].error = null;
+  saveDownloads(); sendDownloadsUpdate();
+  const d = downloadsStore[downloadId];
+  const result = await directDownload(d.url, d.destDir, downloadId);
+  if (result.success) { downloadsStore[downloadId].state = 'completed'; downloadsStore[downloadId].progress = 100; }
+  else if (!result.paused) { downloadsStore[downloadId].state = 'failed'; downloadsStore[downloadId].error = result.error; }
+  saveDownloads(); sendDownloadsUpdate();
+  return result;
+});
+
+ipcMain.handle('download:cancel', (_, downloadId) => {
+  if (!downloadsStore[downloadId]) return { success: false, error: 'Download not found' };
+  if (activeRequests[downloadId]) { activeRequests[downloadId].destroy(); delete activeRequests[downloadId]; }
+  if (downloadsStore[downloadId].filepath && fs.existsSync(downloadsStore[downloadId].filepath)) {
+    try { fs.unlinkSync(downloadsStore[downloadId].filepath); } catch {}
+  }
+  delete downloadsStore[downloadId];
+  saveDownloads(); sendDownloadsUpdate();
+  return { success: true };
+});
+
+ipcMain.handle('download:list', () => {
+  return Object.values(downloadsStore);
+});
 
 ipcMain.handle('game:extract', async (_, zipPath, destDir) => {
   try {

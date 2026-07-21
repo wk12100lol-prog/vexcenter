@@ -36,6 +36,13 @@ contextBridge.exposeInMainWorld('VexCenter', {
     openExternal: (url) => ipcRenderer.invoke('shell:open-external', url),
   },
   onDownloadProgress: (cb) => ipcRenderer.on('download:progress', (_, pct) => cb(pct)),
-  appVersion: '1.6.4',
+  download: {
+    pause: (id) => ipcRenderer.invoke('download:pause', id),
+    resume: (id) => ipcRenderer.invoke('download:resume', id),
+    cancel: (id) => ipcRenderer.invoke('download:cancel', id),
+    list: () => ipcRenderer.invoke('download:list'),
+    onUpdate: (cb) => { const h = (_, d) => cb(d); ipcRenderer.on('downloads:update', h); return () => ipcRenderer.removeListener('downloads:update', h); },
+  },
+  appVersion: '1.6.5',
   platform: process.platform,
 });
